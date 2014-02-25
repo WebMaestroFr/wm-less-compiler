@@ -44,7 +44,7 @@ class WM_Less
 		if ( is_admin() ) {
 			self::apply_settings();
 			add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
-			add_action( 'wm_less_compiler_settings_updated', array( __CLASS__, 'compile' ) );
+			add_action( 'wm_less_settings_updated', array( __CLASS__, 'compile' ) );
 			add_action( 'wm_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		} else {
 			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
