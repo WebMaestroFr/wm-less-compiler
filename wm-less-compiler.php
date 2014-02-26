@@ -11,6 +11,15 @@ License URI: license.txt
 Text Domain: wm-less
 */
 
+
+function wm_less_get( $variable ) {
+	// Return the LESS variable value
+	return WM_Less::$variables[$variable];
+}
+
+
+// Utility functions, to call before or during 'admin_init'.
+
 function wm_less_set_variables( $source ) {
 	// Absolute path to variables definition file
 	// Default : get_template_directory() . '/less/variables.less'
@@ -19,17 +28,22 @@ function wm_less_set_variables( $source ) {
 function wm_less_set_css( $output ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
 	// Default : 'wm-less-' . get_current_blog_id() . '.css'
+	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
 	WM_Less::$output = $output;
 }
-function wm_less_get( $variable ) {
-	return WM_Less::$variables[$variable];
+function wm_less_import( $stylesheets ) {
+	// Array of file paths to call with the @import LESS function
+	// Example : wm_less_import( array( 'less/bootstrap.less', 'less/theme.less' ) );
+	WM_Less::$imports = array_merge( WM_Less::$imports, $stylesheets );
 }
+
 
 class WM_Less
 {
 	public static	$variables = array(),
 					$source = false,
-					$output = false;
+					$output = false,
+					$imports = array();
 
 	public static function init()
 	{
@@ -41,14 +55,11 @@ class WM_Less
 		}
 		if ( ! self::$source ) { self::$source = get_template_directory() . '/less/variables.less'; }
 		if ( ! self::$output ) { self::$output = 'wm-less-' . get_current_blog_id() . '.css'; }
-		if ( is_admin() ) {
-			self::apply_settings();
-			add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
-			add_action( 'wm_less_settings_updated', array( __CLASS__, 'compile' ) );
-			add_action( 'wm_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
-		} else {
-			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
-		}
+		self::apply_settings();
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
+		add_action( 'wm_less_settings_updated', array( __CLASS__, 'compile' ) );
+		add_action( 'wm_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 	}
 
 	private static function apply_settings()
@@ -116,6 +127,9 @@ class WM_Less
 				get_stylesheet_directory() => '',
 				get_template_directory() => ''
 			) );
+			foreach ( self::$imports as $stylesheet ) {
+				$parser->parse( "@import '{$stylesheet}';" );
+			}
 			$parser->parse( wm_get_option( 'wm_less', 'compiler' ) );
 			$parser->ModifyVars( self::$variables );
 			file_put_contents( get_stylesheet_directory() . '/' . ltrim( self::$output, '/' ), $parser->getCss() );
