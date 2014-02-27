@@ -12,8 +12,11 @@ Text Domain: wm-less
 */
 
 
-function wm_less_get( $variable ) {
+function wm_less( $variable, $value = null ) {
 	// Return the LESS variable value
+	if ( $value ) {
+		WM_Less::$variables[$variable] = $value;
+	}
 	return WM_Less::$variables[$variable];
 }
 
@@ -26,8 +29,8 @@ function wm_less_set_variables( $source ) {
 	WM_Less::$source = $source;
 }
 function wm_less_set_css( $output ) {
-	// Path to CSS file to compile, relative to get_stylesheet_directory()
-	// Default : 'wm-less-' . get_current_blog_id() . '.css'
+	// Path to CSS file to compile, relative to get_template_directory()
+	// Default : 'css/wm-less-' . get_current_blog_id() . '.css'
 	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
 	WM_Less::$output = $output;
 }
@@ -54,7 +57,7 @@ class WM_Less
 			return;
 		}
 		if ( ! self::$source ) { self::$source = get_template_directory() . '/less/variables.less'; }
-		if ( ! self::$output ) { self::$output = 'wm-less-' . get_current_blog_id() . '.css'; }
+		if ( ! self::$output ) { self::$output = 'css/wm-less-' . get_current_blog_id() . '.css'; }
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'wm_less_settings_updated', array( __CLASS__, 'compile' ) );
@@ -64,15 +67,16 @@ class WM_Less
 
 	private static function apply_settings()
 	{
-		$desc_child_theme = ( get_stylesheet_directory() === get_template_directory() ) ? '.' : sprintf( __( '<strong>or</strong> <code>%s</code>.', 'wm-less' ), get_template_directory() );
 		new WM_Settings( 'wm_less', __( 'Compiler', 'wm-less' ), array(
 			'parent'	=> false,
 			'title'		=> __( 'LESS', 'wm-less' )
 		), array(
 			'wm_less' => array(
-				'description'	=> sprintf( __( 'Paths of images and @import urls are relative to <code>%s</code>', 'wm-less' ), get_stylesheet_directory() ) . $desc_child_theme,
 				'fields' => array(
-					'compiler'	=> array( 'type' => 'textarea' )
+					'compiler'	=> array(
+						'type' => 'textarea',
+						'description'	=> sprintf( __( 'Paths of images and <strong>@import</strong> urls are relative to <kbd>%s</kbd>', 'wm-less' ), get_template_directory() )
+					)
 				)
 			)
 		), array(
@@ -132,7 +136,7 @@ class WM_Less
 			}
 			$parser->parse( wm_get_option( 'wm_less', 'compiler' ) );
 			$parser->ModifyVars( self::$variables );
-			file_put_contents( get_stylesheet_directory() . '/' . ltrim( self::$output, '/' ), $parser->getCss() );
+			file_put_contents( get_template_directory() . '/' . ltrim( self::$output, '/' ), $parser->getCss() );
 			add_settings_error( 'wm_less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
 		} catch ( exception $e ) {
 			add_settings_error( 'wm_less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
@@ -152,7 +156,7 @@ class WM_Less
 
 	public static function enqueue_scripts()
 	{
-		wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . '/' . ltrim( self::$output, '/' ) );
+		wp_enqueue_style( 'wm-less', get_template_directory_uri() . '/' . ltrim( self::$output, '/' ) );
 	}
 }
 add_action( 'init', array( WM_Less, 'init' ) );
