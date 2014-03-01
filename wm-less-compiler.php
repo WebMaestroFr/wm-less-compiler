@@ -12,16 +12,17 @@ Text Domain: wm-less
 */
 
 
-function wm_less( $variable, $value = null ) {
-	// Return the LESS variable value
-	if ( $value ) {
-		WM_Less::$variables[$variable] = $value;
-	}
+function wm_less_set( $variable, $value = null ) {
+	// Set a LESS variable value
+	WM_Less::$variables[$variable] = $value;
+}
+function wm_less_get( $variable ) {
+	// Return a LESS variable value
 	return WM_Less::$variables[$variable];
 }
 
 
-// Utility functions, to call before or during 'admin_init'.
+// Utility functions, to call before or during the 'init' hook.
 
 function wm_less_set_variables( $source ) {
 	// Absolute path to variables definition file
@@ -29,15 +30,15 @@ function wm_less_set_variables( $source ) {
 	WM_Less::$source = $source;
 }
 function wm_less_set_css( $output ) {
-	// Path to CSS file to compile, relative to get_template_directory()
+	// Path to CSS file to compile, relative to get_stylesheet_directory()
 	// Default : 'css/wm-less-' . get_current_blog_id() . '.css'
 	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
 	WM_Less::$output = $output;
 }
-function wm_less_import( $stylesheets ) {
+function wm_less_import( $files ) {
 	// Array of file paths to call with the @import LESS function
 	// Example : wm_less_import( array( 'less/bootstrap.less', 'less/theme.less' ) );
-	WM_Less::$imports = array_merge( WM_Less::$imports, $stylesheets );
+	WM_Less::$imports = array_merge( WM_Less::$imports, $files );
 }
 
 
@@ -131,12 +132,12 @@ class WM_Less
 				get_stylesheet_directory() => '',
 				get_template_directory() => ''
 			) );
-			foreach ( self::$imports as $stylesheet ) {
-				$parser->parse( "@import '{$stylesheet}';" );
+			foreach ( self::$imports as $file ) {
+				$parser->parse( "@import '{$file}';" );
 			}
 			$parser->parse( wm_get_option( 'wm_less', 'compiler' ) );
 			$parser->ModifyVars( self::$variables );
-			file_put_contents( get_template_directory() . '/' . ltrim( self::$output, '/' ), $parser->getCss() );
+			file_put_contents( get_stylesheet_directory() . '/' . ltrim( self::$output, '/' ), $parser->getCss() );
 			add_settings_error( 'wm_less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
 		} catch ( exception $e ) {
 			add_settings_error( 'wm_less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
@@ -156,7 +157,7 @@ class WM_Less
 
 	public static function enqueue_scripts()
 	{
-		wp_enqueue_style( 'wm-less', get_template_directory_uri() . '/' . ltrim( self::$output, '/' ) );
+		wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . '/' . ltrim( self::$output, '/' ) );
 	}
 }
 add_action( 'init', array( WM_Less, 'init' ) );
