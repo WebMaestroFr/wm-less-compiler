@@ -58,12 +58,13 @@ class WM_Less
 			return;
 		}
 		if ( ! self::$source ) { self::$source = get_template_directory() . '/less/variables.less'; }
-		if ( ! self::$output ) { self::$output = 'css/wm-less-' . get_current_blog_id() . '.css'; }
+		self::$output = self::$output ? '/' . ltrim( self::$output ) : '/css/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'wm_less_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wm_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
+		add_editor_style( get_stylesheet_directory_uri() . self::$output );
 	}
 
 	private static function apply_settings()
@@ -84,7 +85,7 @@ class WM_Less
 			'submit'	=> __( 'Compile', 'wm-less' ),
 			'reset'		=> false
 		) );
-		if ( self::$source && $fields = self::get_fields() ) {
+		if ( self::$source && $fields = self::get_variables_fields() ) {
 			new WM_Settings( 'wm_less_variables', __( 'Variables', 'wm-less' ), array(
 				'parent'	=> 'wm_less'
 			), array(
@@ -99,7 +100,7 @@ class WM_Less
 		}
 	}
 
-	private static function get_fields()
+	private static function get_variables_fields()
 	{
 		if ( is_file( self::$source ) && $lines = file( self::$source ) ) {
 			$fields = array();
@@ -137,7 +138,7 @@ class WM_Less
 			}
 			$parser->parse( wm_get_option( 'wm_less', 'compiler' ) );
 			$parser->ModifyVars( self::$variables );
-			file_put_contents( get_stylesheet_directory() . '/' . ltrim( self::$output, '/' ), $parser->getCss() );
+			file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
 			add_settings_error( 'wm_less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
 		} catch ( exception $e ) {
 			add_settings_error( 'wm_less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
@@ -157,7 +158,7 @@ class WM_Less
 
 	public static function enqueue_scripts()
 	{
-		wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . '/' . ltrim( self::$output, '/' ) );
+		wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . self::$output );
 	}
 }
 add_action( 'init', array( WM_Less, 'init' ) );
