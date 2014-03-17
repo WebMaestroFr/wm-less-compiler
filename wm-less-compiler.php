@@ -24,12 +24,12 @@ function wm_less_get( $variable ) {
 
 // Utility functions, to call before or during the 'init' hook.
 
-function wm_less_set_variables( $source ) {
+function wm_less_variables( $source ) {
 	// Absolute path to variables definition file
 	// Default : get_template_directory() . '/less/variables.less'
 	WM_Less::$source = $source;
 }
-function wm_less_set_css( $output ) {
+function wm_less_stylesheet( $output ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
 	// Default : 'css/wm-less-' . get_current_blog_id() . '.css'
 	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
