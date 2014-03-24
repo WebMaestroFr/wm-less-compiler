@@ -11,12 +11,14 @@ License URI: license.txt
 Text Domain: wm-less
 */
 
+// TODO : Use an array of variables files to parse
 
-function wm_less_set( $variable, $value = null ) {
+
+function less_set( $variable, $value = null ) {
 	// Set a LESS variable value
 	WM_Less::$variables[$variable] = $value;
 }
-function wm_less_get( $variable ) {
+function less_get( $variable ) {
 	// Return a LESS variable value
 	return WM_Less::$variables[$variable];
 }
@@ -24,20 +26,20 @@ function wm_less_get( $variable ) {
 
 // Utility functions, to call before or during the 'init' hook.
 
-function wm_less_variables( $source ) {
+function register_less_variables( $source ) {
 	// Absolute path to variables definition file
 	// Default : get_template_directory() . '/less/variables.less'
 	WM_Less::$source = $source;
 }
-function wm_less_stylesheet( $output ) {
+function less_output( $stylesheet ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
 	// Default : 'css/wm-less-' . get_current_blog_id() . '.css'
 	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
-	WM_Less::$output = $output;
+	WM_Less::$output = $stylesheet;
 }
-function wm_less_import( $files ) {
+function less_import( $files ) {
 	// Array of file paths to call with the @import LESS function
-	// Example : wm_less_import( array( 'less/bootstrap.less', 'less/theme.less' ) );
+	// Example : less_import( array( 'less/bootstrap.less', 'less/theme.less' ) );
 	WM_Less::$imports = array_merge( WM_Less::$imports, $files );
 }
 
@@ -45,31 +47,25 @@ function wm_less_import( $files ) {
 class WM_Less
 {
 	public static	$variables = array(),
-					$source = false,
-					$output = false,
+					$source = get_template_directory() . '/less/variables.less',
+					$output = 'css/wm-less-' . get_current_blog_id() . '.css',
 					$imports = array();
 
 	public static function init()
 	{
-		if ( ! class_exists( WM_Settings ) ) {
-			add_action( 'admin_notices', function () {
-				echo '<div class="error"><p>' . __( 'The plugin <strong>Less Compiler</strong> requires the plugin <strong><a href="https://github.com/WebMaestroFr/wm-settings">WebMaestro Settings</a></strong> in order to display the options pages.', 'wm-less' ) . '</p></div>';
-			});
-			return;
-		}
-		if ( ! self::$source ) { self::$source = get_template_directory() . '/less/variables.less'; }
-		self::$output = self::$output ? '/' . ltrim( self::$output ) : '/css/wm-less-' . get_current_blog_id() . '.css';
+		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' )
+		self::$output = '/' . ltrim( self::$output, '/' );
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
-		add_action( 'wm_less_settings_updated', array( __CLASS__, 'compile' ) );
-		add_action( 'wm_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
+		add_action( 'less_settings_updated', array( __CLASS__, 'compile' ) );
+		add_action( 'register_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_editor_style( get_stylesheet_directory_uri() . self::$output );
 	}
 
 	private static function apply_settings()
 	{
-		new WM_Settings( 'wm_less', __( 'Compiler', 'wm-less' ), array(
+		create_settings_page( 'wm_less', __( 'Compiler', 'wm-less' ), array(
 			'parent'	=> false,
 			'title'		=> __( 'LESS', 'wm-less' )
 		), array(
@@ -86,7 +82,7 @@ class WM_Less
 			'reset'		=> false
 		) );
 		if ( self::$source && $fields = self::get_variables_fields() ) {
-			new WM_Settings( 'wm_less_variables', __( 'Variables', 'wm-less' ), array(
+			create_settings_page( 'register_less_variables', __( 'Variables', 'wm-less' ), array(
 				'parent'	=> 'wm_less'
 			), array(
 				'wm_less_vars' => array(
@@ -113,7 +109,7 @@ class WM_Less
 						'label'			=> $label,
 						'attributes'	=> array( 'placeholder' => $default )
 					);
-					self::$variables[$name] = ( $var = wm_get_option( 'wm_less_vars', $name ) ) ? $var : $default;
+					self::$variables[$name] = ( $var = get_setting( 'wm_less_vars', $name ) ) ? $var : $default;
 				}
 			}
 			return $fields;
@@ -123,7 +119,7 @@ class WM_Less
 
 	public static function compile()
 	{
-		require_once( plugin_dir_path( __FILE__ ) . 'lib/Less.php' );
+		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
 		try {
 			$parser = new Less_Parser( array(
 				'compress'	=> true,
@@ -136,7 +132,7 @@ class WM_Less
 			foreach ( self::$imports as $file ) {
 				$parser->parse( "@import '{$file}';" );
 			}
-			$parser->parse( wm_get_option( 'wm_less', 'compiler' ) );
+			$parser->parse( get_setting( 'wm_less', 'compiler' ) );
 			$parser->ModifyVars( self::$variables );
 			file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
 			add_settings_error( 'wm_less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
@@ -150,9 +146,9 @@ class WM_Less
 		if ( 'toplevel_page_wm_less' == $hook_suffix ) {
 			wp_enqueue_script( 'codemirror', plugin_dir_url( __FILE__ ) . '/js/codemirror.js' );
 			wp_enqueue_script( 'codemirror-less', plugin_dir_url( __FILE__ ) . '/js/codemirror-less.js', array( 'codemirror' ) );
-			wp_enqueue_script( 'wm-less-compiler', plugin_dir_url( __FILE__ ) . '/js/wm-less-compiler.js', array( 'codemirror-less' ) );
+			wp_enqueue_script( 'less-compiler', plugin_dir_url( __FILE__ ) . '/js/less-compiler.js', array( 'codemirror-less' ) );
 			wp_enqueue_style( 'codemirror', plugin_dir_url( __FILE__ ) . '/css/codemirror.css' );
-			wp_enqueue_style( 'wm-less-compiler', plugin_dir_url( __FILE__ ) . '/css/wm-less-compiler.css' );
+			wp_enqueue_style( 'less-compiler', plugin_dir_url( __FILE__ ) . '/css/less-compiler.css' );
 		}
 	}
 
