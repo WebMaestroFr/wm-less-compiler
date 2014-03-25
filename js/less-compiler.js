@@ -1,6 +1,6 @@
 jQuery(document).ready(function () {
     'use strict';
-    CodeMirror.fromTextArea(document.getElementById('wm_less_compiler'), {
+    CodeMirror.fromTextArea(document.getElementById('less_compiler'), {
         viewportMargin: Infinity,
         tabSize: 2
     });

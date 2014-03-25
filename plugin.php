@@ -2,6 +2,7 @@
 /*
 Plugin Name: WebMaestro Less Compiler
 Plugin URI: http://#
+GitHub Plugin URI: WebMaestroFr/wm-less-compiler
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress
@@ -59,18 +60,18 @@ class WM_Less
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'less_settings_updated', array( __CLASS__, 'compile' ) );
-		add_action( 'register_less_variables_settings_updated', array( __CLASS__, 'compile' ) );
+		add_action( 'less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_editor_style( get_stylesheet_directory_uri() . self::$output );
 	}
 
 	private static function apply_settings()
 	{
-		create_settings_page( 'wm_less', __( 'Compiler', 'wm-less' ), array(
+		create_settings_page( 'less', __( 'Compiler', 'wm-less' ), array(
 			'parent'	=> false,
 			'title'		=> __( 'LESS', 'wm-less' )
 		), array(
-			'wm_less' => array(
+			'less' => array(
 				'fields' => array(
 					'compiler'	=> array(
 						'type' => 'textarea',
@@ -83,10 +84,10 @@ class WM_Less
 			'reset'		=> false
 		) );
 		if ( self::$source && $fields = self::get_variables_fields() ) {
-			create_settings_page( 'register_less_variables', __( 'Variables', 'wm-less' ), array(
-				'parent'	=> 'wm_less'
+			create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
+				'parent'	=> 'less'
 			), array(
-				'wm_less_vars' => array(
+				'less_vars' => array(
 					'description'	=> __( 'Edit your LESS variables from this very dashboard.', 'wm-less' ),
 					'fields'		=> $fields
 				)
@@ -110,7 +111,7 @@ class WM_Less
 						'label'			=> $label,
 						'attributes'	=> array( 'placeholder' => $default )
 					);
-					self::$variables[$name] = ( $var = get_setting( 'wm_less_vars', $name ) ) ? $var : $default;
+					self::$variables[$name] = ( $var = get_setting( 'less_vars', $name ) ) ? $var : $default;
 				}
 			}
 			return $fields;
@@ -133,18 +134,18 @@ class WM_Less
 			foreach ( self::$imports as $file ) {
 				$parser->parse( "@import '{$file}';" );
 			}
-			$parser->parse( get_setting( 'wm_less', 'compiler' ) );
+			$parser->parse( get_setting( 'less', 'compiler' ) );
 			$parser->ModifyVars( self::$variables );
 			file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
-			add_settings_error( 'wm_less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
+			add_settings_error( 'less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
 		} catch ( exception $e ) {
-			add_settings_error( 'wm_less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
+			add_settings_error( 'less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
 		}
 	}
 
 	public static function admin_enqueue_scripts( $hook_suffix )
 	{
-		if ( 'toplevel_page_wm_less' == $hook_suffix ) {
+		if ( 'toplevel_page_less' == $hook_suffix ) {
 			wp_enqueue_script( 'codemirror', plugin_dir_url( __FILE__ ) . '/js/codemirror.js' );
 			wp_enqueue_script( 'codemirror-less', plugin_dir_url( __FILE__ ) . '/js/codemirror-less.js', array( 'codemirror' ) );
 			wp_enqueue_script( 'less-compiler', plugin_dir_url( __FILE__ ) . '/js/less-compiler.js', array( 'codemirror-less' ) );
