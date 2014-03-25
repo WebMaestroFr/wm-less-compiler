@@ -1,0 +1,3 @@
+[submodule "libs/wm-settings"]
+	path = libs/wm-settings
+	url = git://github.com/WebMaestroFr/wm-settings.git
