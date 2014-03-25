@@ -12,8 +12,6 @@ License URI: license.txt
 Text Domain: wm-less
 */
 
-// TODO : Use an array of variables files to parse
-
 
 function less_set( $variable, $value = null ) {
 	// Set a LESS variable value
@@ -30,7 +28,7 @@ function less_get( $variable ) {
 function register_less_variables( $source ) {
 	// Absolute path to variables definition file
 	// Default : get_template_directory() . '/less/variables.less'
-	WM_Less::$sources = array_merge( WM_Less::$sources, $source );
+	WM_Less::$sources[] = $source;
 }
 function less_output( $stylesheet ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
@@ -156,7 +154,9 @@ class WM_Less
 
 	public static function enqueue_scripts()
 	{
-		wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . self::$output );
+		if ( is_file( get_stylesheet_directory() . self::$output ) ) {
+			wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . self::$output );
+		}
 	}
 }
 add_action( 'init', array( WM_Less, 'init' ) );
