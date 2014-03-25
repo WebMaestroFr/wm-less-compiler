@@ -47,14 +47,15 @@ function less_import( $files ) {
 class WM_Less
 {
 	public static	$variables = array(),
-					$source = get_template_directory() . '/less/variables.less',
-					$output = 'css/wm-less-' . get_current_blog_id() . '.css',
+					$source = false,
+					$output = false,
 					$imports = array();
 
 	public static function init()
 	{
-		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' )
-		self::$output = '/' . ltrim( self::$output, '/' );
+		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
+		if ( ! self::$source ) { self::$source = get_template_directory() . '/less/variables.less'; }
+		self::$output = self::$output ? '/' . ltrim( self::$output, '/' ) : '/css/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'less_settings_updated', array( __CLASS__, 'compile' ) );
