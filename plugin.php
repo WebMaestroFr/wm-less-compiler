@@ -30,11 +30,11 @@ function less_get( $variable ) {
 function register_less_variables( $source ) {
 	// Absolute path to variables definition file
 	// Default : get_template_directory() . '/less/variables.less'
-	WM_Less::$source = $source;
+	WM_Less::$sources = array_merge( WM_Less::$sources, $source );
 }
 function less_output( $stylesheet ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
-	// Default : 'css/wm-less-' . get_current_blog_id() . '.css'
+	// Default : 'wm-less-' . get_current_blog_id() . '.css'
 	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
 	WM_Less::$output = $stylesheet;
 }
@@ -48,15 +48,14 @@ function less_import( $files ) {
 class WM_Less
 {
 	public static	$variables = array(),
-					$source = false,
+					$sources = array(),
 					$output = false,
 					$imports = array();
 
 	public static function init()
 	{
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
-		if ( ! self::$source ) { self::$source = get_template_directory() . '/less/variables.less'; }
-		self::$output = self::$output ? '/' . ltrim( self::$output, '/' ) : '/css/wm-less-' . get_current_blog_id() . '.css';
+		self::$output = self::$output ? '/' . ltrim( self::$output, '/' ) : '/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'less_settings_updated', array( __CLASS__, 'compile' ) );
@@ -83,7 +82,7 @@ class WM_Less
 			'submit'	=> __( 'Compile', 'wm-less' ),
 			'reset'		=> false
 		) );
-		if ( self::$source && $fields = self::get_variables_fields() ) {
+		if ( $fields = self::get_variables_fields() ) {
 			create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
 				'parent'	=> 'less'
 			), array(
@@ -100,23 +99,24 @@ class WM_Less
 
 	private static function get_variables_fields()
 	{
-		if ( is_file( self::$source ) && $lines = file( self::$source ) ) {
-			$fields = array();
-			foreach ( $lines as $line ) {
-				if ( preg_match( '/^@([a-zA-Z-]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
-					$name = sanitize_key( $matches[1] );
-					$label = '@' . $name;
-					$default = trim( $matches[2] );
-					$fields[$name] = array(
-						'label'			=> $label,
-						'attributes'	=> array( 'placeholder' => $default )
-					);
-					self::$variables[$name] = ( $var = get_setting( 'less_vars', $name ) ) ? $var : $default;
+		$fields = array();
+		foreach ( self::$sources as $source ) {
+			if ( is_file( $source ) && $lines = file( $source ) ) {
+				foreach ( $lines as $line ) {
+					if ( preg_match( '/^@([a-zA-Z-]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
+						$name = sanitize_key( $matches[1] );
+						$label = '@' . $name;
+						$default = trim( $matches[2] );
+						$fields[$name] = array(
+							'label'			=> $label,
+							'attributes'	=> array( 'placeholder' => $default )
+						);
+						self::$variables[$name] = ( $var = get_setting( 'less_vars', $name ) ) ? $var : $default;
+					}
 				}
 			}
-			return $fields;
 		}
-		return false;
+		return empty( $fields ) ? false : $fields;
 	}
 
 	public static function compile()
@@ -160,3 +160,4 @@ class WM_Less
 	}
 }
 add_action( 'init', array( WM_Less, 'init' ) );
+register_activation_hook( __FILE__, array( WM_Less, 'compile' ) );
