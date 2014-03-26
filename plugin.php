@@ -2,7 +2,6 @@
 /*
 Plugin Name: WebMaestro Less Compiler
 Plugin URI: http://#
-GitHub Plugin URI: WebMaestroFr/wm-less-compiler
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress
@@ -10,6 +9,8 @@ Version: 1.0
 License: GNU General Public License
 License URI: license.txt
 Text Domain: wm-less
+GitHub Plugin URI: https://github.com/WebMaestroFr/wm-less-compiler
+GitHub Branch: master
 */
 
 
@@ -65,32 +66,33 @@ class WM_Less
 	private static function apply_settings()
 	{
 		create_settings_page( 'less', __( 'Compiler', 'wm-less' ), array(
-			'parent'	=> false,
-			'title'		=> __( 'LESS', 'wm-less' )
+			'parent' => false,
+			'title' => __( 'LESS', 'wm-less' ),
+			'icon_url' => 'dashicons-art',
 		), array(
 			'less' => array(
 				'fields' => array(
-					'compiler'	=> array(
+					'compiler' => array(
 						'type' => 'textarea',
-						'description'	=> sprintf( __( 'Paths of images and <strong>@import</strong> urls are relative to <kbd>%s</kbd>', 'wm-less' ), get_template_directory() )
+						'description' => sprintf( __( 'Paths of images and <strong>@import</strong> urls are relative to <kbd>%s</kbd>', 'wm-less' ), get_template_directory() )
 					)
 				)
 			)
 		), array(
-			'submit'	=> __( 'Compile', 'wm-less' ),
-			'reset'		=> false
+			'submit' => __( 'Compile', 'wm-less' ),
+			'reset' => false
 		) );
 		if ( $fields = self::get_variables_fields() ) {
 			create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
-				'parent'	=> 'less'
+				'parent' => 'less'
 			), array(
 				'less_vars' => array(
-					'description'	=> __( 'Edit your LESS variables from this very dashboard.', 'wm-less' ),
-					'fields'		=> $fields
+					'description' => __( 'Edit your LESS variables from this very dashboard.', 'wm-less' ),
+					'fields' => $fields
 				)
 			), array(
-				'submit'	=> __( 'Update Variables', 'wm-less' ),
-				'reset'		=> __( 'Reset Variables', 'wm-less' )
+				'submit' => __( 'Update Variables', 'wm-less' ),
+				'reset' => __( 'Reset Variables', 'wm-less' )
 			) );
 		}
 	}
@@ -106,8 +108,8 @@ class WM_Less
 						$label = '@' . $name;
 						$default = trim( $matches[2] );
 						$fields[$name] = array(
-							'label'			=> $label,
-							'attributes'	=> array( 'placeholder' => $default )
+							'label' => $label,
+							'attributes' => array( 'placeholder' => $default )
 						);
 						self::$variables[$name] = ( $var = get_setting( 'less_vars', $name ) ) ? $var : $default;
 					}
@@ -122,8 +124,8 @@ class WM_Less
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
 		try {
 			$parser = new Less_Parser( array(
-				'compress'	=> true,
-				'cache_dir'	=>	plugin_dir_path( __FILE__ ) . 'cache'
+				'compress' => true,
+				'cache_dir' => plugin_dir_path( __FILE__ ) . 'cache'
 			) );
 			$parser->SetImportDirs( array(
 				get_stylesheet_directory() => '',
