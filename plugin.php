@@ -35,7 +35,7 @@ function less_output( $stylesheet ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
 	// Default : 'wm-less-' . get_current_blog_id() . '.css'
 	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
-	WM_Less::$output = $stylesheet;
+	WM_Less::$output = '/' . ltrim( $stylesheet, '/' );
 }
 function less_import( $files ) {
 	// Array of file paths to call with the @import LESS function
@@ -54,13 +54,13 @@ class WM_Less
 	public static function init()
 	{
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
-		self::$output = self::$output ? '/' . ltrim( self::$output, '/' ) : '/wm-less-' . get_current_blog_id() . '.css';
+		self::$output = self::$output ? self::$output : '/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'less_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
-		add_editor_style( get_stylesheet_directory_uri() . self::$output );
+		// add_editor_style( get_stylesheet_directory_uri() . self::$output );
 	}
 
 	private static function apply_settings()
@@ -71,10 +71,11 @@ class WM_Less
 			'icon_url' => 'dashicons-art',
 		), array(
 			'less' => array(
+				'description' => '<p>' . sprintf( __( 'The resulting CSS will be compiled into <strong>%s</strong>. You can use the PHP function <code>less_output( $css_file );</code> to output an other file instead (relative to <strong>%s</strong>).', 'wm-less' ), self::$output, get_stylesheet_directory() ) . '</p><p>' . __( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) . '</p>',
 				'fields' => array(
 					'compiler' => array(
 						'type' => 'textarea',
-						'description' => sprintf( __( 'Paths of images and <strong>@import</strong> urls are relative to <kbd>%s</kbd>', 'wm-less' ), get_template_directory() )
+						'description' => sprintf( __( 'From this very stylesheet, <strong>@import</strong> urls are relative to <code>%s</code>.', 'wm-less' ), get_template_directory() )
 					)
 				)
 			)
@@ -82,19 +83,17 @@ class WM_Less
 			'submit' => __( 'Compile', 'wm-less' ),
 			'reset' => false
 		) );
-		if ( $fields = self::get_variables_fields() ) {
-			create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
-				'parent' => 'less'
-			), array(
-				'less_vars' => array(
-					'description' => __( 'Edit your LESS variables from this very dashboard.', 'wm-less' ),
-					'fields' => $fields
-				)
-			), array(
-				'submit' => __( 'Update Variables', 'wm-less' ),
-				'reset' => __( 'Reset Variables', 'wm-less' )
-			) );
-		}
+		create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
+			'parent' => 'less'
+		), array(
+			'less_vars' => array(
+				'description' => '<p>' . __( 'Set definition files (often something like "<strong>/less/variables.less</strong>") with <code>register_less_variables( $path_to_file );</code>, and then edit your LESS variables from this very page.', 'wm-less' ) . '</p><p>' . __( 'You can also define (or override) any variable with <code>less_set( $variable, $value );</code>, and access any of these values with <code>less_get( $variable );</code>.', 'wm-less' ) . '</p>',
+				'fields' => self::get_variables_fields()
+			)
+		), array(
+			'submit' => __( 'Update Variables', 'wm-less' ),
+			'reset' => __( 'Reset Variables', 'wm-less' )
+		) );
 	}
 
 	private static function get_variables_fields()
@@ -116,7 +115,7 @@ class WM_Less
 				}
 			}
 		}
-		return empty( $fields ) ? false : $fields;
+		return $fields;
 	}
 
 	public static function compile()
