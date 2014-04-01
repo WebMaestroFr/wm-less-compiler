@@ -5,7 +5,7 @@ Plugin URI: http://#
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress
-Version: 1.1
+Version: 1.1.2
 License: GNU General Public License
 License URI: license.txt
 Text Domain: wm-less
@@ -160,5 +160,5 @@ class WM_Less
 		}
 	}
 }
-add_action( 'init', array( WM_Less, 'init' ) );
-register_activation_hook( __FILE__, array( WM_Less, 'compile' ) );
+add_action( 'init', array( 'WM_Less', 'init' ) );
+register_activation_hook( __FILE__, array( 'WM_Less', 'compile' ) );
