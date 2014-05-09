@@ -1,16 +1,6 @@
 <?php
 /*
-Plugin Name: WebMaestro Settings
-Plugin URI: http://webmaestro.fr/wordpress-settings-api-options-pages/
-Author: Etienne Baudry
-Author URI: http://webmaestro.fr
-Description: Simplified options system for WordPress. Generates a default page for settings.
-Version: 1.2.3
-License: GNU General Public License
-License URI: license.txt
-Text Domain: wm-settings
-GitHub Plugin URI: https://github.com/WebMaestroFr/wm-settings
-GitHub Branch: master
+http://webmaestro.fr/wordpress-settings-api-options-pages/
 */
 
 if ( ! class_exists( 'WM_Settings' ) ) {
