@@ -125,7 +125,7 @@ class WM_Less
 		try {
 			$cache_dir = plugin_dir_path( __FILE__ ) . 'cache';
 			if ( ! is_writable( $cache_dir ) ) {
-				add_settings_error( 'less_compiler', 'cache_permissions', sprintf( __( 'The cache directory (<strong>%s</strong>) is not writable. No big deal, but caching would make the compiling step a bit smoother.', 'wm-less' ), $cache_dir ), 'error' );
+				add_settings_error( 'less_compiler', 'cache_permissions', sprintf( __( 'The cache directory (<code>%s</code>) is not writable. No big deal, but caching would make the compiling step a bit smoother.', 'wm-less' ), $cache_dir ), 'error' );
 			}
 			$parser = new Less_Parser( array(
 				'compress' => true,
