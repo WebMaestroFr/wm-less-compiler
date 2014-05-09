@@ -28,7 +28,6 @@ function less_get( $variable ) {
 
 function register_less_variables( $source ) {
 	// Absolute path to variables definition file
-	// Default : get_template_directory() . '/less/variables.less'
 	WM_Less::$sources[] = $source;
 }
 function less_output( $stylesheet ) {
