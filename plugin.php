@@ -43,17 +43,18 @@ function less_import( $files ) {
 	WM_Less::$imports = array_merge( WM_Less::$imports, $files );
 }
 
+require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
+
 
 class WM_Less
 {
 	public static	$variables = array(),
-					$sources = array(),
-					$output = false,
-					$imports = array();
+		$sources = array(),
+		$output = false,
+		$imports = array();
 
 	public static function init()
 	{
-		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
 		self::$output = self::$output ? self::$output : '/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
@@ -74,6 +75,7 @@ class WM_Less
 				'description' => '<p>' . sprintf( __( 'The resulting CSS will be compiled into <strong>%s</strong>. You can use the PHP function <code>less_output( $css_file );</code> to output an other file instead (relative to <strong>%s</strong>).', 'wm-less' ), self::$output, get_stylesheet_directory() ) . '</p><p>' . __( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) . '</p>',
 				'fields' => array(
 					'compiler' => array(
+						'label' => __( 'Stylesheet', 'wm-less' ),
 						'type' => 'textarea',
 						'description' => sprintf( __( 'From this very stylesheet, <strong>@import</strong> urls are relative to <code>%s</code>.', 'wm-less' ), get_template_directory() )
 					)
@@ -121,24 +123,26 @@ class WM_Less
 	public static function compile()
 	{
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
-		try {
-			$parser = new Less_Parser( array(
-				'compress' => true,
-				'cache_dir' => plugin_dir_path( __FILE__ ) . 'cache'
-			) );
-			$parser->SetImportDirs( array(
-				get_stylesheet_directory() => '',
-				get_template_directory() => ''
-			) );
-			foreach ( self::$imports as $file ) {
-				$parser->parse( "@import '{$file}';" );
+		if ( ! empty( self::$output ) ) {
+			try {
+				$parser = new Less_Parser( array(
+					'compress' => true,
+					'cache_dir' => plugin_dir_path( __FILE__ ) . 'cache'
+				) );
+				$parser->SetImportDirs( array(
+					get_stylesheet_directory() => '',
+					get_template_directory() => ''
+				) );
+				foreach ( self::$imports as $file ) {
+					$parser->parse( "@import '{$file}';" );
+				}
+				$parser->parse( get_setting( 'less', 'compiler' ) );
+				$parser->ModifyVars( self::$variables );
+				file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
+				add_settings_error( 'less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
+			} catch ( exception $e ) {
+				add_settings_error( 'less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
 			}
-			$parser->parse( get_setting( 'less', 'compiler' ) );
-			$parser->ModifyVars( self::$variables );
-			file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
-			add_settings_error( 'less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
-		} catch ( exception $e ) {
-			add_settings_error( 'less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
 		}
 	}
 
@@ -162,3 +166,5 @@ class WM_Less
 }
 add_action( 'init', array( 'WM_Less', 'init' ) );
 register_activation_hook( __FILE__, array( 'WM_Less', 'compile' ) );
+
+?>
