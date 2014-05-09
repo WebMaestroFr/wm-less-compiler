@@ -122,26 +122,25 @@ class WM_Less
 	public static function compile()
 	{
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
-		if ( ! empty( self::$output ) ) {
-			try {
-				$parser = new Less_Parser( array(
-					'compress' => true,
-					'cache_dir' => plugin_dir_path( __FILE__ ) . 'cache'
-				) );
-				$parser->SetImportDirs( array(
-					get_stylesheet_directory() => '',
-					get_template_directory() => ''
-				) );
-				foreach ( self::$imports as $file ) {
-					$parser->parse( "@import '{$file}';" );
-				}
-				$parser->parse( get_setting( 'less', 'compiler' ) );
-				$parser->ModifyVars( self::$variables );
-				file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
-				add_settings_error( 'less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
-			} catch ( exception $e ) {
-				add_settings_error( 'less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
+		try {
+			$cache_dir = plugin_dir_path( __FILE__ ) . 'cache';
+			$parser = new Less_Parser( array(
+				'compress' => true,
+				'cache_dir' => is_writable( $cache_dir ) ? $cache_dir : null
+			) );
+			$parser->SetImportDirs( array(
+				get_stylesheet_directory() => '',
+				get_template_directory() => ''
+			) );
+			foreach ( self::$imports as $file ) {
+				$parser->parse( "@import '{$file}';" );
 			}
+			$parser->parse( get_setting( 'less', 'compiler' ) );
+			$parser->ModifyVars( self::$variables );
+			file_put_contents( get_stylesheet_directory() . self::$output, $parser->getCss() );
+			add_settings_error( 'less_compiler', 'less_compiled', __( 'LESS successfully compiled.', 'wm-less' ), 'updated' );
+		} catch ( exception $e ) {
+			add_settings_error( 'less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
 		}
 	}
 
@@ -164,6 +163,5 @@ class WM_Less
 	}
 }
 add_action( 'init', array( 'WM_Less', 'init' ) );
-register_activation_hook( __FILE__, array( 'WM_Less', 'compile' ) );
 
 ?>
