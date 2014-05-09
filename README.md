@@ -12,6 +12,13 @@ It uses [**leafo**'s LESS compiler written in PHP](https://github.com/leafo/less
 
 The plugin comes with few useful functions. You will most likely use these in your theme's `functions.php`.
 
+- Define path to the CSS file to compile (relative to your theme's directory).
+  ```php
+  less_output( $stylesheet );
+  ```
+  The default output is : `wm-less-[BLOG-ID].css`.
+  > Do not set your theme's `style.css` as output ! You silly.
+
 - Import any LESS files to compile prior to the main stylesheet.
   ```php
   less_import( $files_array );
@@ -31,13 +38,6 @@ The plugin comes with few useful functions. You will most likely use these in yo
   ```php
   less_get( $variable );
   ```
-
-- Define path to the CSS file to compile (relative to your theme's directory).
-  ```php
-  less_output( $stylesheet );
-  ```
-  The default output is : `wm-less-[BLOG-ID].css`.
-  > Do not set your theme's `style.css` as output ! You silly.
 
 ## Contributors
 
