@@ -1,2 +1,7 @@
 /cache/*
 !/cache/index.php
+.svn
+/assets
+/branches
+/tags
+/trunk

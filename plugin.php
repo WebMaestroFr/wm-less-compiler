@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: WebMaestro Less Compiler
+Plugin Name: Less Compiler
 Plugin URI: http://#
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress
-Version: 1.1.2
+Version: 1.2
 License: GNU General Public License
 License URI: license.txt
 Text Domain: wm-less
@@ -42,8 +42,6 @@ function less_import( $files ) {
 	WM_Less::$imports = array_merge( WM_Less::$imports, $files );
 }
 
-require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
-
 
 class WM_Less
 {
@@ -54,6 +52,7 @@ class WM_Less
 
 	public static function init()
 	{
+		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
 		self::$output = self::$output ? self::$output : '/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
