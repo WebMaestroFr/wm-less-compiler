@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: LESS Compiler
-Plugin URI: http://#
+Plugin URI: http://webmaestro.fr/less-compiler-wordpress/
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress
