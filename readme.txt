@@ -61,16 +61,13 @@ No answer to give.
 
 == Changelog ==
 
+= 1.2.2 =
+* Menu icon and cache warning
+
 = 1.2 =
 * Minor fixes (typo, dependences)
-
-= 1.0 =
-* First stable release
 
 == Upgrade Notice ==
 
 = 1.2 =
 * Minor fixes (typo, dependences)
-
-= 1.0 =
-First stable release
