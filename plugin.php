@@ -5,7 +5,7 @@ Plugin URI: http://webmaestro.fr/less-compiler-wordpress/
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress
-Version: 1.2.1
+Version: 1.2.2
 License: GNU General Public License
 License URI: license.txt
 Text Domain: wm-less
