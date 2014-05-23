@@ -67,7 +67,7 @@ class WM_Less
 		create_settings_page( 'less', __( 'Compiler', 'wm-less' ), array(
 			'parent' => false,
 			'title' => __( 'LESS', 'wm-less' ),
-			'icon_url' => 'dashicons-art',
+			'icon_url' => plugin_dir_url( __FILE__ ) . 'img/menu-icon.png',
 		), array(
 			'less' => array(
 				'description' => '<p>' . sprintf( __( 'The resulting CSS will be compiled into <strong>%s</strong>. You can use the PHP function <code>less_output( $css_file );</code> to output an other file instead (relative to <strong>%s</strong>).', 'wm-less' ), self::$output, get_stylesheet_directory() ) . '</p><p>' . __( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) . '</p>',
@@ -118,13 +118,19 @@ class WM_Less
 		return $fields;
 	}
 
+	public static function cache_permissions_notice() { ?>
+    <div id="setting-error-cache_permissions" class="updated settings-error" style="border-left-color: #ffba00;">
+			<p><strong><?php echo sprintf( __( 'The cache directory (<code>%s</code>) is not writable. No big deal, but caching would make the compiling step a bit smoother.', 'wm-less' ), plugin_dir_path( __FILE__ ) . 'cache' ); ?></strong></p>
+		</div>
+	<?php }
+
 	public static function compile()
 	{
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
 		try {
 			$cache_dir = plugin_dir_path( __FILE__ ) . 'cache';
 			if ( ! is_writable( $cache_dir ) ) {
-				add_settings_error( 'less_compiler', 'cache_permissions', sprintf( __( 'The cache directory (<code>%s</code>) is not writable. No big deal, but caching would make the compiling step a bit smoother.', 'wm-less' ), $cache_dir ), 'error' );
+				add_action( 'admin_notices', array( __CLASS__, 'cache_permissions_notice' ) );
 			}
 			$parser = new Less_Parser( array(
 				'compress' => true,
