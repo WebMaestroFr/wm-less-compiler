@@ -8,7 +8,7 @@ It uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 2. Move it into your wp-content/plugins directory
 3. Activate the plugin in WordPress
 
-## Functions
+## PHP Functions
 
 The plugin comes with few useful functions. You will most likely use these in your theme's `functions.php`.
 
@@ -22,6 +22,11 @@ The plugin comes with few useful functions. You will most likely use these in yo
 - Import any LESS files to compile prior to the main stylesheet.
   ```php
   less_import( $files_array );
+  ```
+
+- Alternatively you can register and enqueue your LESS cheats the same way you would do for your CSS.
+  ```php
+  wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );
   ```
 
 - To edit variables from the WordPress dashboard, you will have to define the absolute path to your variables definition file(s).
