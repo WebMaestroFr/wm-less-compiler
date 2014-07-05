@@ -1,6 +1,6 @@
 A LESS compiler for WordPress ! This is a plugin that will allow you to write and compile LESS, and to edit style variables straight into your WordPress dashboard.
 
-It uses [**leafo**'s LESS compiler written in PHP](https://github.com/leafo/lessphp).
+It uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 
 ## Installation
 

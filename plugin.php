@@ -60,6 +60,7 @@ class WM_Less
 		add_action( 'less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		// add_editor_style( get_stylesheet_directory_uri() . self::$output );
+		add_filter( 'style_loader_src', array( __CLASS__, 'style_loader_src' ) );
 	}
 
 	private static function apply_settings()
@@ -70,7 +71,13 @@ class WM_Less
 			'icon_url' => plugin_dir_url( __FILE__ ) . 'img/menu-icon.png',
 		), array(
 			'less' => array(
-				'description' => '<p>' . sprintf( __( 'The resulting CSS will be compiled into <strong>%s</strong>. You can use the PHP function <code>less_output( $css_file );</code> to output an other file instead (relative to <strong>%s</strong>).', 'wm-less' ), self::$output, get_stylesheet_directory() ) . '</p><p>' . __( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) . '</p>',
+				'description' => '<p>' .
+						sprintf( __( 'The resulting CSS will be compiled into <strong>%s</strong>.', 'wm-less' ), ltrim( self::$output, '/' ) ) .
+						' ' . sprintf( __( 'You can use the PHP function <code>less_output( $css_file );</code> to output an other file instead (relative to <strong>%s</strong>).', 'wm-less' ), get_stylesheet_directory() ) .
+						' ' . __( 'Do not set your theme\'s <strong>style.css</strong> as output !', 'wm-less' ) .
+					'</p><p>' .
+						__( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) .
+					'</p>',
 				'fields' => array(
 					'compiler' => array(
 						'label' => __( 'Stylesheet', 'wm-less' ),
@@ -127,19 +134,15 @@ class WM_Less
 	public static function compile()
 	{
 		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
+		$parser = new Less_Parser( array(
+			'compress' => true,
+			'cache_dir' => self::get_cache_dir()
+		) );
+		$parser->SetImportDirs( array(
+			get_stylesheet_directory() => '',
+			get_template_directory() => ''
+		) );
 		try {
-			$cache_dir = plugin_dir_path( __FILE__ ) . 'cache';
-			if ( ! is_writable( $cache_dir ) ) {
-				add_action( 'admin_notices', array( __CLASS__, 'cache_permissions_notice' ) );
-			}
-			$parser = new Less_Parser( array(
-				'compress' => true,
-				'cache_dir' => is_writable( $cache_dir ) ? $cache_dir : null
-			) );
-			$parser->SetImportDirs( array(
-				get_stylesheet_directory() => '',
-				get_template_directory() => ''
-			) );
 			foreach ( self::$imports as $file ) {
 				$parser->parse( "@import '{$file}';" );
 			}
@@ -151,15 +154,23 @@ class WM_Less
 			add_settings_error( 'less_compiler', $e->getCode(), sprintf( __( 'Compiler result with the following error :<pre>%s</pre>', 'wm-less' ), $e->getMessage() ) );
 		}
 	}
+	private static function get_cache_dir()
+	{
+		$cache_dir = plugin_dir_path( __FILE__ ) . 'cache';
+		if ( ! is_writable( $cache_dir ) ) {
+			add_action( 'admin_notices', array( __CLASS__, 'cache_permissions_notice' ) );
+		}
+		return is_writable( $cache_dir ) ? $cache_dir : null;
+	}
 
 	public static function admin_enqueue_scripts( $hook_suffix )
 	{
 		if ( 'toplevel_page_less' == $hook_suffix ) {
-			wp_enqueue_script( 'codemirror', plugin_dir_url( __FILE__ ) . '/js/codemirror.js' );
-			wp_enqueue_script( 'codemirror-less', plugin_dir_url( __FILE__ ) . '/js/codemirror-less.js', array( 'codemirror' ) );
-			wp_enqueue_script( 'less-compiler', plugin_dir_url( __FILE__ ) . '/js/less-compiler.js', array( 'codemirror-less' ) );
-			wp_enqueue_style( 'codemirror', plugin_dir_url( __FILE__ ) . '/css/codemirror.css' );
-			wp_enqueue_style( 'less-compiler', plugin_dir_url( __FILE__ ) . '/css/less-compiler.css' );
+			wp_enqueue_script( 'codemirror', plugin_dir_url( __FILE__ ) . 'js/codemirror.js' );
+			wp_enqueue_script( 'codemirror-less', plugin_dir_url( __FILE__ ) . 'js/codemirror-less.js', array( 'codemirror' ) );
+			wp_enqueue_script( 'less-compiler', plugin_dir_url( __FILE__ ) . 'js/less-compiler.js', array( 'codemirror-less' ) );
+			wp_enqueue_style( 'codemirror', plugin_dir_url( __FILE__ ) . 'css/codemirror.css' );
+			wp_enqueue_style( 'less-compiler', plugin_dir_url( __FILE__ ) . 'css/less-compiler.css' );
 		}
 	}
 
@@ -168,6 +179,23 @@ class WM_Less
 		if ( is_file( get_stylesheet_directory() . self::$output ) ) {
 			wp_enqueue_style( 'wm-less', get_stylesheet_directory_uri() . self::$output );
 		}
+	}
+
+	public static function style_loader_src( $src )
+	{
+		$input = strtok( $src, '?' );
+    if ( preg_match( '/\.less$/', $input ) ) {
+			require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
+			$input = str_replace( trailingslashit( site_url() ), ABSPATH, $input );
+			if ( $cache_dir = self::get_cache_dir() ) {
+				return trailingslashit( str_replace( ABSPATH, trailingslashit( site_url() ), $cache_dir ) ) . Less_Cache::Get( array(
+						$input => dirname( $input )
+					), array(
+						'cache_dir' => $cache_dir
+					) );
+			}
+    }
+    return $src;
 	}
 }
 add_action( 'init', array( 'WM_Less', 'init' ) );

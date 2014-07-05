@@ -40,7 +40,7 @@ The plugin also comes with a few useful PHP functions :
 
 You will most likely use these in your theme's `functions.php`.
 
-The plugin uses [**leafo**'s LESS compiler written in PHP](https://github.com/leafo/lessphp).
+The plugin uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 
 == Installation ==
 

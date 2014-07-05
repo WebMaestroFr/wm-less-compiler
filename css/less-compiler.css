@@ -7,3 +7,9 @@
 	padding: 2px 6px;
 	line-height: 1.4;
 }
+.toplevel_page_less .form-table th {
+	display: none;
+}
+.toplevel_page_less .form-table td {
+	padding-left: 0;
+}
