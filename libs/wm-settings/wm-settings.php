@@ -1,6 +1,16 @@
 <?php
 /*
-http://webmaestro.fr/wordpress-settings-api-options-pages/
+Plugin Name: WebMaestro Settings
+Plugin URI: http://webmaestro.fr/wordpress-settings-api-options-pages/
+Author: Etienne Baudry
+Author URI: http://webmaestro.fr
+Description: Simplified options system for WordPress. Generates a default page for settings.
+Version: 1.2.4
+License: GNU General Public License
+License URI: license.txt
+Text Domain: wm-settings
+GitHub Plugin URI: https://github.com/WebMaestroFr/wm-settings
+GitHub Branch: master
 */
 
 if ( ! class_exists( 'WM_Settings' ) ) {
@@ -27,7 +37,8 @@ class WM_Settings {
     $this->apply_settings( $settings );
     $this->args  = array_merge( array(
       'submit' => __( 'Save Settings', 'wm-settings' ),
-      'reset'  => __( 'Reset Settings', 'wm-settings' )
+      'reset'  => __( 'Reset Settings', 'wm-settings' ),
+      'tabs'   => true
     ), $args );
     add_action( 'admin_menu', array( $this, 'admin_menu' ) );
     add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -61,6 +72,11 @@ class WM_Settings {
       if ( ! get_option( $setting ) ) {
         add_option( $setting, $this->get_defaults( $setting ) );
       }
+    }
+    // This is really ugly, there must be a better way to deal with that active tab
+    $current_tag = "wm_settings_{$this->page}_current_tab";
+    if ( isset( $_POST[$current_tag] ) ) {
+      update_option( $current_tag, (int) $_POST[$current_tag] );
     }
   }
 
@@ -145,10 +161,10 @@ class WM_Settings {
   public function do_page()
   { ?>
     <form action="options.php" method="POST" enctype="multipart/form-data" class="wrap">
+      <input type="hidden" name="wm_settings_<?php echo $this->page; ?>_current_tab" value="<?php echo get_option( "wm_settings_{$this->page}_current_tab" ); ?>" id="wm-settings-current-tab">
       <h2><?php echo $this->title; ?></h2>
       <?php
         // Avoid showing admin notice twice
-        // TODO : Target the pages where it happens
         if ( ! in_array( $this->menu['parent'], array( 'options-general.php' ) ) ) {
           settings_errors();
         }
@@ -167,10 +183,14 @@ class WM_Settings {
   public function do_section( $args )
   {
     extract( $args );
+    echo "<input name='{$id}[{$this->page}_setting]' type='hidden' value='{$id}'";
+    if ( $this->args['tabs'] && ! empty( $this->settings[$id]['title'] ) ) {
+      echo " class='wm-settings-tab'";
+    }
+    echo " />";
     if ( $text = $this->settings[$id]['description'] ) {
       echo wpautop( $text );
     }
-    echo "<input name='{$id}[{$this->page}_setting]' type='hidden' value='{$id}' />";
   }
 
   public static function do_field( $args )
@@ -186,7 +206,7 @@ class WM_Settings {
     switch ( $type )
     {
       case 'checkbox':
-        $check = checked( 1, $value, false);
+        $check = checked( 1, $value, false );
         echo "<label><input {$attrs} id='{$id}' type='checkbox' value='1' {$check} />";
         if ( $description ) { echo " {$description}"; }
         echo "</label>";
@@ -215,11 +235,12 @@ class WM_Settings {
 
       case 'media':
         echo "<fieldset class='wm-settings-media' id='{$id}'><input {$attrs} type='hidden' value='{$value}' />";
-        if ( $value ) {
-          echo wp_get_attachment_image( $value, 'medium' );
-        }
         echo "<p><a class='button button-large wm-select-media' title='{$label}'>" . sprintf( __( 'Select %s', 'wm-settings' ), $label ) . "</a> ";
-        echo "<a class='button button-small wm-remove-media' title='{$label}'>" . sprintf( __( 'Remove %s', 'wm-settings' ), $label ) . "</a></p>{$desc}</fieldset>";
+        echo "<a class='button button-small wm-remove-media' title='{$label}'>" . sprintf( __( 'Remove %s', 'wm-settings' ), $label ) . "</a></p>";
+        if ( $value ) {
+          echo wpautop( wp_get_attachment_image( $value, 'medium' ) );
+        }
+        echo "{$desc}</fieldset>";
         break;
 
       case 'textarea':
@@ -231,7 +252,7 @@ class WM_Settings {
         echo "<fieldset id='{$id}'>";
         foreach ( $options as $n => $label ) {
           $a = preg_replace( "/name\=\'(.+)\'/", "name='$1[{$n}]'", $attrs );
-          $check = checked( 1, $value[$n], false);
+          $check = checked( 1, $value[$n], false );
           $options[$n] = "<label><input {$a} type='checkbox' value='1' {$check} /> {$label}</label>";
         }
         echo implode( '<br />', $options );
@@ -350,6 +371,18 @@ function create_settings_page( $page = 'custom_settings', $title = null, $menu =
 {
   return new WM_Settings( $page, $title, $menu, $settings, $args );
 }
+
+function wm_settings_plugin_priority()
+{
+	$wm_settings = plugin_basename( __FILE__ );
+	$active_plugins = get_option( 'active_plugins' );
+	if ( $order = array_search( $wm_settings, $active_plugins ) ) {
+		array_splice( $active_plugins, $order, 1 );
+		array_unshift( $active_plugins, $wm_settings );
+		update_option( 'active_plugins', $active_plugins );
+	}
+}
+add_action( 'activated_plugin', 'wm_settings_plugin_priority' );
 
 }
 
