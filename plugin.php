@@ -200,7 +200,7 @@ class WM_Less
 						'cache_dir' => $cache_dir
 					) );
 			}
-			return false;
+			return null;
     }
     return $src;
 	}
