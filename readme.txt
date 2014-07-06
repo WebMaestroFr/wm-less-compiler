@@ -4,7 +4,7 @@ Donate link: http://webmaestro.fr/less-compiler-wordpress/
 Tags: LESS, compiler
 Requires at least: 3.9
 Tested up to: 3.9.1
-Stable tag: 1.2
+Stable tag: 1.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,10 @@ No answer to give.
 
 == Changelog ==
 
+= 1.3 =
+* "wp_enqueue_style" support
+* Moved cache directory to wp-content/cache
+
 = 1.2.2 =
 * Menu icon and cache warning
 
@@ -73,6 +77,10 @@ No answer to give.
 * Minor fixes (typo, dependences)
 
 == Upgrade Notice ==
+
+= 1.3 =
+* "wp_enqueue_style" support
+* Moved cache directory to wp-content/cache
 
 = 1.2 =
 * Minor fixes (typo, dependences)
