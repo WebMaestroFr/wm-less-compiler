@@ -40,7 +40,7 @@ The plugin also comes with a few useful PHP functions :
 
 - ```wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );```
 
-  Alternatively you can register and enqueue your LESS cheats the same way you would do for your CSS.
+  Alternatively you can register and enqueue your LESS sheets the same way you would do for your CSS.
 
 
 You will most likely use these in your theme's `functions.php`.

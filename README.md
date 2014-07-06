@@ -24,7 +24,7 @@ The plugin comes with few useful functions. You will most likely use these in yo
   less_import( $files_array );
   ```
 
-- Alternatively you can register and enqueue your LESS cheats the same way you would do for your CSS.
+- Alternatively you can register and enqueue your LESS sheets the same way you would do for your CSS.
   ```php
   wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );
   ```

@@ -77,6 +77,8 @@ class WM_Less
 						' ' . __( 'Do not set your theme\'s <strong>style.css</strong> as output !', 'wm-less' ) .
 					'</p><p>' .
 						__( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) .
+					'</p><p>' .
+						__( 'Alternatively, you can enqueue any LESS sheet the same way you would for your CSS : <code>wp_enqueue_style( $handle, $src, $deps, $ver, $media );</code>.', 'wm-less' ) .
 					'</p>',
 				'fields' => array(
 					'compiler' => array(
@@ -156,11 +158,15 @@ class WM_Less
 	}
 	private static function get_cache_dir()
 	{
-		$cache_dir = plugin_dir_path( __FILE__ ) . 'cache';
+		$cache_dir = ABSPATH . 'wp-content/cache';
+		if ( ! is_dir( $cache_dir ) ) {
+			mkdir( $cache_dir );
+		}
 		if ( ! is_writable( $cache_dir ) ) {
 			add_action( 'admin_notices', array( __CLASS__, 'cache_permissions_notice' ) );
+			return null;
 		}
-		return is_writable( $cache_dir ) ? $cache_dir : null;
+		return $cache_dir;
 	}
 
 	public static function admin_enqueue_scripts( $hook_suffix )
@@ -194,6 +200,7 @@ class WM_Less
 						'cache_dir' => $cache_dir
 					) );
 			}
+			return false;
     }
     return $src;
 	}
