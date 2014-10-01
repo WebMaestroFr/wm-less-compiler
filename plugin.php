@@ -4,7 +4,7 @@ Plugin Name: LESS Compiler
 Plugin URI: http://webmaestro.fr/less-compiler-wordpress/
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
-Description: Less Compiler for Wordpress
+Description: Less Compiler for Wordpress.
 Version: 1.3
 License: GNU General Public License
 License URI: license.txt
@@ -36,8 +36,8 @@ function register_less_variables( $files ) {
 function less_output( $stylesheet ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
 	// Default : 'wm-less-' . get_current_blog_id() . '.css'
-	// DO NOT SET YOUR THEME'S "style.css" AS OUTPUT ! You silly.
-	WM_Less::$output = '/' . ltrim( $stylesheet, '/' );
+	$stylesheet = '/' . ltrim( $stylesheet, '/' );
+	if ( $stylesheet !== '/style.css' ) { WM_Less::$output = $stylesheet; }
 }
 function less_import( $files ) {
 	// Array of file paths to call with the @import LESS function
@@ -69,21 +69,14 @@ class WM_Less
 
 	private static function apply_settings()
 	{
+		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
 		create_settings_page( 'less', __( 'Compiler', 'wm-less' ), array(
 			'parent' => false,
 			'title' => __( 'LESS', 'wm-less' ),
 			'icon_url' => plugin_dir_url( __FILE__ ) . 'img/menu-icon.png',
 		), array(
 			'less' => array(
-				'description' => '<p>' .
-						sprintf( __( 'The resulting CSS will be compiled into <strong>%s</strong>.', 'wm-less' ), ltrim( self::$output, '/' ) ) .
-						' ' . sprintf( __( 'You can use the PHP function <code>less_output( $css_file );</code> to output an other file instead (relative to <strong>%s</strong>).', 'wm-less' ), get_stylesheet_directory() ) .
-						' ' . __( 'Do not set your theme\'s <strong>style.css</strong> as output !', 'wm-less' ) .
-					'</p><p>' .
-						__( 'Import any LESS files to compile prior to this stylesheet with <code>less_import( $files_array );</code>.', 'wm-less' ) .
-					'</p><p>' .
-						__( 'Alternatively, you can enqueue any LESS sheet the same way you would for your CSS : <code>wp_enqueue_style( $handle, $src, $deps, $ver, $media );</code>.', 'wm-less' ) .
-					'</p>',
+				'description' => '<a href="http://lesscss.org/">' . __( 'Getting started with LESS', 'wm-less' ) . '</a> | <a href="http://webmaestro.fr/less-compiler-wordpress/">Configure the compiler</a>',
 				'fields' => array(
 					'compiler' => array(
 						'label' => __( 'Stylesheet', 'wm-less' ),
@@ -96,6 +89,7 @@ class WM_Less
 			'submit' => __( 'Compile', 'wm-less' ),
 			'reset' => false
 		) );
+		$variable_fields = self::get_variables_fields();
 		create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
 			'parent' => 'less'
 		), array(
@@ -157,9 +151,7 @@ class WM_Less
 	private static function get_cache_dir()
 	{
 		$cache_dir = ABSPATH . 'wp-content/cache';
-		if ( ! is_dir( $cache_dir ) ) {
-			mkdir( $cache_dir );
-		}
+		if ( ! is_dir( $cache_dir ) ) { mkdir( $cache_dir ); }
 		if ( ! is_writable( $cache_dir ) ) {
 			add_action( 'admin_notices', array( __CLASS__, 'cache_permissions_notice' ) );
 			return null;
@@ -207,18 +199,5 @@ class WM_Less
 	}
 }
 add_action( 'init', array( 'WM_Less', 'init' ) );
-
-require_once( plugin_dir_path( __FILE__ ) . '/libs/tgm-plugin-activation.php' );
-function wm_less_register_plugins() {
-	$config = array( 'is_automatic' => true );
-	tgmpa( array( array(
-		'name'								=> 'WebMaestro Settings',
-		'slug'								=> 'wm-settings',
-		'source'							=> plugin_dir_path( __FILE__ ) . 'libs/wm-settings.zip',
-		'required'						=> true,
-		'force_activation'		=> true
-	) ), $config );
-}
-add_action( 'tgmpa_register', 'wm_less_register_plugins' );
 
 ?>
