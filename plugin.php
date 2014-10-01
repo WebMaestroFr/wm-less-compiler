@@ -26,9 +26,12 @@ function less_get( $variable ) {
 
 // Utility functions, to call before or during the 'init' hook.
 
-function register_less_variables( $source ) {
+function register_less_variables( $files ) {
 	// Absolute path to variables definition file
-	WM_Less::$sources[] = $source;
+	if ( is_string( $files ) ) { $files = array( $files ); }
+	foreach ( $files as $file ) {
+		if ( is_file( $file ) ) { WM_Less::$sources[] = $file; }
+	}
 }
 function less_output( $stylesheet ) {
 	// Path to CSS file to compile, relative to get_stylesheet_directory()
@@ -39,7 +42,10 @@ function less_output( $stylesheet ) {
 function less_import( $files ) {
 	// Array of file paths to call with the @import LESS function
 	// Example : less_import( array( 'less/bootstrap.less', 'less/theme.less' ) );
-	WM_Less::$imports = array_merge( WM_Less::$imports, $files );
+	if ( is_string( $files ) ) { $files = array( $files ); }
+	foreach ( $files as $file ) {
+		WM_Less::$imports[] = $file;
+	}
 }
 
 
@@ -52,14 +58,12 @@ class WM_Less
 
 	public static function init()
 	{
-		require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
 		self::$output = self::$output ? self::$output : '/wm-less-' . get_current_blog_id() . '.css';
 		self::apply_settings();
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 		add_action( 'less_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
-		// add_editor_style( get_stylesheet_directory_uri() . self::$output );
 		add_filter( 'style_loader_src', array( __CLASS__, 'style_loader_src' ) );
 	}
 
@@ -111,7 +115,7 @@ class WM_Less
 		foreach ( self::$sources as $source ) {
 			if ( is_file( $source ) && $lines = file( $source ) ) {
 				foreach ( $lines as $line ) {
-					if ( preg_match( '/^@([a-zA-Z-]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
+					if ( preg_match( '/^@([a-zA-Z-_]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
 						$name = sanitize_key( $matches[1] );
 						$label = '@' . $name;
 						$default = trim( $matches[2] );
@@ -127,15 +131,9 @@ class WM_Less
 		return $fields;
 	}
 
-	public static function cache_permissions_notice() { ?>
-    <div id="setting-error-cache_permissions" class="updated settings-error" style="border-left-color: #ffba00;">
-			<p><strong><?php echo sprintf( __( 'The cache directory (<code>%s</code>) is not writable. No big deal, but caching would make the compiling step a bit smoother.', 'wm-less' ), plugin_dir_path( __FILE__ ) . 'cache' ); ?></strong></p>
-		</div>
-	<?php }
-
 	public static function compile()
 	{
-		require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
+		require_once( plugin_dir_path( __FILE__ ) . 'libs/less.php/Less.php' );
 		$parser = new Less_Parser( array(
 			'compress' => true,
 			'cache_dir' => self::get_cache_dir()
@@ -168,6 +166,11 @@ class WM_Less
 		}
 		return $cache_dir;
 	}
+	public static function cache_permissions_notice() { ?>
+		<div id="setting-error-cache_permissions" class="updated settings-error" style="border-left-color: #ffba00;">
+			<p><strong><?php echo sprintf( __( 'The cache directory (<code>%s</code>) is not writable. No big deal, but caching would make the compiling step a bit smoother.', 'wm-less' ), plugin_dir_path( __FILE__ ) . 'cache' ); ?></strong></p>
+		</div>
+	<?php }
 
 	public static function admin_enqueue_scripts( $hook_suffix )
 	{
@@ -191,14 +194,12 @@ class WM_Less
 	{
 		$input = strtok( $src, '?' );
     if ( preg_match( '/\.less$/', $input ) ) {
-			require_once( plugin_dir_path( __FILE__ ) . 'libs/less-parser/Less.php' );
 			$input = str_replace( trailingslashit( site_url() ), ABSPATH, $input );
-			if ( $cache_dir = self::get_cache_dir() ) {
-				return trailingslashit( str_replace( ABSPATH, trailingslashit( site_url() ), $cache_dir ) ) . Less_Cache::Get( array(
-						$input => dirname( $input )
-					), array(
-						'cache_dir' => $cache_dir
-					) );
+			if ( is_file( $input ) && $cache_dir = self::get_cache_dir() ) {
+				require_once( plugin_dir_path( __FILE__ ) . 'libs/less.php/Less.php' );
+				$file = Less_Cache::Get( array( $input => dirname( $input ) ), array( 'cache_dir' => $cache_dir ) );
+				$path = str_replace( ABSPATH, trailingslashit( site_url() ), $cache_dir );
+				return trailingslashit( $path ) . $file;
 			}
 			return null;
     }
@@ -206,5 +207,18 @@ class WM_Less
 	}
 }
 add_action( 'init', array( 'WM_Less', 'init' ) );
+
+require_once( plugin_dir_path( __FILE__ ) . '/libs/tgm-plugin-activation.php' );
+function wm_less_register_plugins() {
+	$config = array( 'is_automatic' => true );
+	tgmpa( array( array(
+		'name'								=> 'WebMaestro Settings',
+		'slug'								=> 'wm-settings',
+		'source'							=> plugin_dir_path( __FILE__ ) . 'libs/wm-settings.zip',
+		'required'						=> true,
+		'force_activation'		=> true
+	) ), $config );
+}
+add_action( 'tgmpa_register', 'wm_less_register_plugins' );
 
 ?>
