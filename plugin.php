@@ -64,9 +64,9 @@ class WM_Less
 	{
 		self::$cache = ABSPATH . 'wp-content/cache';
 		if ( ! is_dir( self::$cache ) && ! mkdir( self::$cache, 0755 ) ) {
-			add_settings_error( 'less_compiler', 'no_cache_dir', sprintf( __( 'The cache directory (<code>%s</code>) does not exist and cannot be created. Please create it with <code>0755</code> permissions.', 'wm-less' ), $cache ), 'error' );
+			add_settings_error( 'less_compiler', 'no_cache_dir', sprintf( __( 'The cache directory (<code>%s</code>) does not exist and cannot be created. Please create it with <code>0755</code> permissions.', 'wm-less' ), self::$cache ), 'error' );
 		} else if ( ! is_writable( self::$cache ) && ! chmod( self::$cache, 0755 ) ) {
-			add_settings_error( 'less_compiler', 'cache_not_writable', sprintf( __( 'The cache directory (<code>%s</code>) is not writable. Please apply <code>0755</code> permissions to it.', 'wm-less' ), $cache ), 'error' );
+			add_settings_error( 'less_compiler', 'cache_not_writable', sprintf( __( 'The cache directory (<code>%s</code>) is not writable. Please apply <code>0755</code> permissions to it.', 'wm-less' ), self::$cache ), 'error' );
 		} else {
 			self::$output = self::$cache . '/wm-less-' . get_current_blog_id() . '.css';
 			add_action( 'less_compiler_settings_updated', array( __CLASS__, 'compile' ) );
