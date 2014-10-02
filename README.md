@@ -4,20 +4,13 @@ It uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 
 ## Installation
 
-1. Download and unzip the last release
-2. Move it into your wp-content/plugins directory
+1. Download the last release
+2. Unzip it into your wp-content/plugins directory
 3. Activate the plugin in WordPress
 
 ## PHP Functions
 
 The plugin comes with few useful functions. You will most likely use these in your theme's `functions.php`.
-
-- Define path to the CSS file to compile (relative to your theme's directory).
-  ```php
-  less_output( $stylesheet );
-  ```
-  The default output is : `wm-less-[BLOG-ID].css`.
-  > Do not set your theme's `style.css` as output ! You silly.
 
 - Import any LESS files to compile prior to the main stylesheet.
   ```php
@@ -47,6 +40,10 @@ The plugin comes with few useful functions. You will most likely use these in yo
 ## Contributors
 
 Contributors are more than welcome !
+
+## Documentation
+
+[Read the documentation](http://webmaestro.fr/less-compiler-wordpress/)
 
 ## License
 
