@@ -44,7 +44,7 @@ function less_import( $files ) {
 }
 function less_output() {
 	// This function does not apply anymore
-	add_settings_error( 'less_compiler', 'depreciated_function', sprintf( __( 'The function <code>less_output( $stylesheet );</code> is depreciated. Stylesheets will from now be generated within the cache directory.', 'wm-less' ), $cache ) );
+	add_settings_error( 'less_compiler', 'depreciated_function', __( 'The function <code>less_output( $stylesheet );</code> is depreciated. Stylesheets will from now be generated within the cache directory.', 'wm-less' ) );
 }
 
 
