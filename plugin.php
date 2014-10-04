@@ -5,7 +5,7 @@ Plugin URI: http://webmaestro.fr/less-compiler-wordpress/
 Author: Etienne Baudry
 Author URI: http://webmaestro.fr
 Description: Less Compiler for Wordpress.
-Version: 1.4
+Version: 1.5
 License: GNU General Public License
 License URI: license.txt
 Text Domain: wm-less
@@ -14,74 +14,114 @@ GitHub Branch: master
 */
 
 
+require_once( plugin_dir_path( __FILE__ ) . 'compatibility.php' );
+
 function less_set( $variable, $value = null ) {
 	// Set a LESS variable value
+	$variable = sanitize_key( $variable );
 	WM_Less::$variables[$variable] = $value;
 }
+
 function less_get( $variable ) {
 	// Return a LESS variable value
-	return WM_Less::$variables[$variable];
-}
-
-
-// Utility functions, to call before or during the 'init' hook.
-
-function register_less_variables( $files ) {
-	// Absolute path to variables definition file(s)
-	// Example : register_less_variables( array( 'less/variables.less' ) );
-	if ( is_string( $files ) ) { $files = array( $files ); }
-	foreach ( $files as $file ) {
-		WM_Less::$sources[] = '/' . ltrim( $file, '/' );
+	$variable = sanitize_key( $variable );
+	if ( isset( WM_Less::$variables[$variable] ) ) {
+		return WM_Less::$variables[$variable];
 	}
+	return null;
 }
-function less_import( $files ) {
-	// File(s) to call with the @import directive
-	// Example : less_import( array( 'less/bootstrap.less', 'less/theme.less' ) );
-	if ( is_string( $files ) ) { $files = array( $files ); }
-	foreach ( $files as $file ) {
-		WM_Less::$imports[] = $file;
-	}
-}
-function less_output() {
-	// This function does not apply anymore
-	add_settings_error( 'less_compiler', 'depreciated_function', __( 'The function <code>less_output( $stylesheet );</code> is depreciated. Stylesheets will from now be generated within the cache directory.', 'wm-less' ) );
-}
-
 
 require_once( plugin_dir_path( __FILE__ ) . 'libs/wm-settings/wm-settings.php' );
 
 
 class WM_Less
 {
-	public static	$variables = array(),
-		$sources = array(),
-		$imports = array();
+	public static	$variables = array();
 
 	private static $cache,
-		$output;
+		$sources = array(),
+		$imports = array(),
+		$output,
+		$notices = array();
 
 	public static function init()
 	{
-		self::$cache = ABSPATH . 'wp-content/cache';
-		if ( ! is_dir( self::$cache ) && ! mkdir( self::$cache, 0755 ) ) {
-			add_settings_error( 'less_compiler', 'no_cache_dir', sprintf( __( 'The cache directory (<code>%s</code>) does not exist and cannot be created. Please create it with <code>0755</code> permissions.', 'wm-less' ), self::$cache ), 'error' );
-		} else if ( ! is_writable( self::$cache ) && ! chmod( self::$cache, 0755 ) ) {
-			add_settings_error( 'less_compiler', 'cache_not_writable', sprintf( __( 'The cache directory (<code>%s</code>) is not writable. Please apply <code>0755</code> permissions to it.', 'wm-less' ), self::$cache ), 'error' );
-		} else {
-			self::$output = self::$cache . '/wm-less-' . get_current_blog_id() . '.css';
+		if ( self::do_configuration() ) {
 			add_action( 'less_compiler_settings_updated', array( __CLASS__, 'compile' ) );
 			add_action( 'less_variables_settings_updated', array( __CLASS__, 'compile' ) );
 			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
+			add_action( 'admin_notices', array( __CLASS__, 'admin_notices' ) );
 			add_filter( 'style_loader_src', array( __CLASS__, 'style_loader_src' ) );
 		}
-		self::apply_settings();
+		if ( is_admin() ) {
+			self::apply_settings();
+		} else {
+			self::$variables = get_setting( 'less_vars' );
+		}
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
+	}
+
+	private static function do_configuration()
+	{
+		$defaults = array(
+			'variables' => array(),
+			'imports'   => array(),
+			'cache'    => ABSPATH . 'wp-content/cache'
+		);
+		$config = apply_filters( 'less_configuration', $defaults );
+		self::$sources = self::valid_files( $config, 'variables' );
+		self::$imports = self::valid_files( $config, 'imports' );
+		self::$cache = empty( $config['cache'] ) ? $defaults['cache'] : $config['cache'];
+		if ( ! is_dir( self::$cache ) && ! mkdir( self::$cache, 0755 ) ) {
+			self::$notices[] = sprintf( __( 'The cache directory <code>%s</code> does not exist and cannot be created. Please create it with <code>0755</code> permissions.', 'wm-less' ), self::$cache );
+		} else if ( ! is_writable( self::$cache ) && ! chmod( self::$cache, 0755 ) ) {
+			self::$notices[] = sprintf( __( 'The cache directory <code>%s</code> is not writable. Please apply <code>0755</code> permissions to it.', 'wm-less' ), self::$cache );
+		} else {
+			self::$output = self::$cache . '/wm-less-' . get_current_blog_id() . '.css';
+			return true;
+		}
+		return false;
+	}
+	private static function valid_files( $array, $key )
+	{
+		$valid = array();
+		if ( ! empty( $array[$key] ) ) {
+			$files = $array[$key];
+			if ( ! is_array( $files ) ) {
+				$files = array( (string) $files );
+			}
+			foreach ( $files as $file ) {
+				if ( $path = self::valid_file( $file ) ) {
+					$valid[] = $path;
+				}
+			}
+		}
+		return $valid;
+	}
+	private static function valid_file( $path )
+	{
+		if ( strpos( $path, site_url() ) === 0 ) {
+			$path = str_replace( trailingslashit( site_url() ), ABSPATH, $path );
+		} else if ( strpos( $path, ABSPATH ) !== 0 ) {
+			$path = trailingslashit( get_template_directory() ) . ltrim( $path, '/' );
+		}
+		if ( ! is_file( $path ) ) {
+			self::$notices[] = sprintf( __( 'The file <code>%s</code> cannot be found.', 'wm-less' ), $path );
+			return false;
+		}
+		return $path;
+	}
+
+	public static function admin_notices()
+	{
+		foreach ( self::$notices as $notice ) {
+			add_settings_error( 'wm_less', 'config_error', $notice, 'error' );
+		}
 	}
 
 	private static function apply_settings()
 	{
-		if ( is_admin() ) {
-			create_settings_page( 'less_compiler', __( 'Compiler', 'wm-less' ), array(
+		create_settings_page( 'less_compiler', __( 'Compiler', 'wm-less' ), array(
 				'parent' => false,
 				'title' => __( 'LESS', 'wm-less' ),
 				'icon_url' => plugin_dir_url( __FILE__ ) . 'img/menu-icon.png',
@@ -104,42 +144,39 @@ class WM_Less
 				'reset'   => false,
 				'updated' => false
 			) );
-			$vars_page = create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
+		$vars_page = create_settings_page( 'less_variables', __( 'Variables', 'wm-less' ), array(
 				'parent' => 'less_compiler'
 			), null, array(
 				'submit'  => __( 'Update Variables', 'wm-less' ),
 				'reset'   => __( 'Reset Variables', 'wm-less' ),
 				'updated' => __( 'Variables updated.')
 			) );
-			if ( empty( self::$sources ) ) {
-				$vars_page->add_notice( __( 'In order to edit your LESS variables from this page, you must <a href="http://webmaestro.fr/less-compiler-wordpress/" target="_blank">register your definition file(s)</a> with <code>register_less_variables( $files );</code>.' ) );
-			} else {
-				$fields = array();
-				foreach ( self::$sources as $source ) {
-					$source = get_template_directory() . $source;
-					if ( is_file( $source ) && $lines = file( $source ) ) {
-						foreach ( $lines as $line ) {
-							if ( preg_match( '/^@([a-zA-Z-_]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
-								$name = sanitize_key( $matches[1] );
-								$label = '@' . $name;
-								$default = trim( $matches[2] );
-								$fields[$name] = array(
-									'label' => $label,
-									'attributes' => array( 'placeholder' => $default )
-								);
-								self::$variables[$name] = ( $var = get_setting( 'less_vars', $name ) ) ? $var : $default;
-							}
+		if ( empty( self::$sources ) ) {
+			$vars_page->add_notice( __( 'In order to edit your LESS variables from this page, you must <a href="http://webmaestro.fr/less-compiler-wordpress/" target="_blank">register your definition file(s)</a>.' ) );
+		} else {
+			$fields = array();
+			foreach ( self::$sources as $source ) {
+				if ( $lines = file( $source ) ) {
+					foreach ( $lines as $line ) {
+						if ( preg_match( '/^@([a-zA-Z-_]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
+							$name = sanitize_key( $matches[1] );
+							$label = '@' . $name;
+							$default = trim( $matches[2] );
+							$fields[$name] = array(
+								'label' => $label,
+								'attributes' => array( 'placeholder' => $default )
+							);
+							$value = get_setting( 'less_vars', $name );
+							self::$variables[$name] = $value ? $value : $default;
 						}
 					}
 				}
 				if ( empty( $fields ) ) {
-					$vars_page->add_notice( __( 'No variables were found in the registered definition files.' ), 'warning' );
+					$vars_page->add_notice( sprintf( __( 'No variables were found in the registered definition file <code>%s</code>.' ), $source ), 'warning' );
 				} else {
 					$vars_page->apply_settings( array( 'less_vars' => array( 'fields' => $fields ) ) );
 				}
 			}
-		} else {
-			self::$variables = get_setting( 'less_vars' );
 		}
 	}
 
@@ -152,7 +189,9 @@ class WM_Less
 		) );
 		$parser->SetImportDirs( array(
 			get_stylesheet_directory() => '',
-			get_template_directory() => ''
+			get_template_directory()   => '',
+			ABSPATH                    => '',
+			''                         => ''
 		) );
 		try {
 			foreach ( self::$imports as $file ) {
@@ -170,7 +209,7 @@ class WM_Less
 
 	public static function admin_enqueue_scripts( $hook_suffix )
 	{
-		if ( 'toplevel_page_less_compiler' == $hook_suffix ) {
+		if ( 'toplevel_page_less_compiler' === $hook_suffix ) {
 			wp_enqueue_script( 'codemirror', plugin_dir_url( __FILE__ ) . 'js/codemirror.js' );
 			wp_enqueue_script( 'codemirror-css', plugin_dir_url( __FILE__ ) . 'js/codemirror.css.js', array( 'codemirror' ) );
 			wp_enqueue_script( 'codemirror-placeholder', plugin_dir_url( __FILE__ ) . 'js/codemirror.placeholder.js', array( 'codemirror' ) );
@@ -190,12 +229,15 @@ class WM_Less
 	{
 		$input = strtok( $src, '?' );
     if ( preg_match( '/\.less$/', $input ) ) {
-			$input = str_replace( trailingslashit( site_url() ), ABSPATH, $input );
-			if ( is_file( $input ) ) {
+			if ( $file = self::valid_file( $input ) ) {
 				require_once( plugin_dir_path( __FILE__ ) . 'libs/less.php/Less.php' );
-				$file = Less_Cache::Get( array( $input => dirname( $input ) ), array( 'cache_dir' => self::$cache ) );
+				$css = Less_Cache::Get( array(
+						$file => dirname( $file )
+					), array(
+						'cache_dir' => self::$cache
+					), self::$variables );
 				$path = str_replace( ABSPATH, trailingslashit( site_url() ), self::$cache );
-				return trailingslashit( $path ) . $file;
+				return trailingslashit( $path ) . $css;
 			}
 			return null;
     }
