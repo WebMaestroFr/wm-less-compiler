@@ -75,6 +75,7 @@ No answer to give.
 * Uses filter for config
 * Better use of cache
 * Updated dependencies
+* Cleaner UI
 
 = 1.3 =
 * "wp_enqueue_style" support
@@ -92,6 +93,7 @@ No answer to give.
 * Uses filter for config
 * Better use of cache
 * Updated dependencies
+* Cleaner UI
 
 = 1.3 =
 * "wp_enqueue_style" support
