@@ -34,6 +34,7 @@ It uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
     );
   }
   ```
+  Configuration of the plugin is optional, but you should at least register your variables if you are using a CSS framework.
 
 - Set a LESS variable value
   ```php

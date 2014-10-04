@@ -3,8 +3,8 @@ Contributors: WebMaestro.Fr
 Donate link: http://webmaestro.fr/less-compiler-wordpress/
 Tags: LESS, compiler
 Requires at least: 3.9
-Tested up to: 3.9.1
-Stable tag: 1.3
+Tested up to: 4.0
+Stable tag: 1.5
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,36 +14,41 @@ LESS compiler for WordPress. Allows you to write and compile LESS, and to edit s
 
 Write LESS, edit your variables and compile your stylesheet from your dashboard.
 
-The plugin also comes with a few useful PHP functions :
+[Read the documentation](http://webmaestro.fr/less-compiler-wordpress/)
 
-- ```less_set( $variable, $value );```
+  - Register and enqueue your LESS sheets the same way you would do for your CSS.
+    ```
+    wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );
+    ```
 
-  Set a LESS variable value.
+  - Configure the plugin with the `less_configuration` filter.
+    ```
+    add_filter( 'less_configuration', 'my_less_config' );
+    function my_less_config( $defaults ) {
+      $variables = array( 'less/variables.less' );
+      $imports = array(
+        'less/bootstrap.less',
+        'less/theme.less'
+      );
+      return array(
+        'variables' => $variables,
+        'imports'   => $imports
+      );
+    }
+    ```
+    Configuration of the plugin is optional, but you should at least register your variables if you are using a CSS framework.
 
-- ```less_get( $variable );```
+  - Set a LESS variable value
+    ```
+    less_set( $variable, $value );
+    ```
 
-  Get a LESS variable value.
+  - Get a LESS variable value
+    ```
+    less_get( $variable );
+    ```
 
-- ```register_less_variables( $source );```
-
-  Define the absolute path to your variables definition file(s).
-
-- ```less_output( $stylesheet );```
-
-  Define the path of the CSS file to compile (relative to your theme's directory).
-  The default output is : `wm-less-[BLOG-ID].css`.
-  > Do not set your theme's `style.css` as output ! You silly.
-
-- ```less_import( $files_array );```
-
-  Import any LESS files to compile prior to the dashboard stylesheet.
-
-- ```wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );```
-
-  Alternatively you can register and enqueue your LESS sheets the same way you would do for your CSS.
-
-
-You will most likely use these in your theme's `functions.php`.
+You will most likely use these functions in your theme's `functions.php`.
 
 The plugin uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 
@@ -66,6 +71,11 @@ No answer to give.
 
 == Changelog ==
 
+= 1.5 =
+* Uses filter for config
+* Better use of cache
+* Updated dependencies
+
 = 1.3 =
 * "wp_enqueue_style" support
 * Moved cache directory to wp-content/cache
@@ -77,6 +87,11 @@ No answer to give.
 * Minor fixes (typo, dependences)
 
 == Upgrade Notice ==
+
+= 1.5 =
+* Uses filter for config
+* Better use of cache
+* Updated dependencies
 
 = 1.3 =
 * "wp_enqueue_style" support
