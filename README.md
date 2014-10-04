@@ -17,6 +17,7 @@ It uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 - Register and enqueue your LESS sheets the same way you would do for your CSS.
   ```php
   wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );
+  ```
 
 - Configure the plugin with the `less_configuration` filter.
   ```php
