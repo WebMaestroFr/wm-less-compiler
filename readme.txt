@@ -17,11 +17,13 @@ Write LESS, edit your variables and compile your stylesheet from your dashboard.
 [Read the documentation](http://webmaestro.fr/less-compiler-wordpress/)
 
   - Register and enqueue your LESS sheets the same way you would do for your CSS.
+
     ```
     wp_enqueue_style( 'my-less-handle', 'http://example.com/css/mystyle.less', $deps, $ver, $media );
     ```
 
   - Configure the plugin with the `less_configuration` filter.
+
     ```
     add_filter( 'less_configuration', 'my_less_config' );
     function my_less_config( $defaults ) {
@@ -36,6 +38,7 @@ Write LESS, edit your variables and compile your stylesheet from your dashboard.
       );
     }
     ```
+    
     Configuration of the plugin is optional, but you should at least register your variables if you are using a CSS framework.
 
   - Set a LESS variable value
