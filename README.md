@@ -22,16 +22,16 @@ It uses [the Less.php Compiler](http://lessphp.gpeasy.com/).
 - Configure the plugin with the `less_configuration` filter.
   ```php
   add_filter( 'less_configuration', 'my_less_config' );
-  function my_less_config( $defaults ) {
-    $variables = array( 'less/variables.less' );
-    $imports = array(
+  function my_less_config( $config ) {
+    $my_variables = array( 'less/variables.less' );
+    $my_imports = array(
       'less/bootstrap.less',
       'less/theme.less'
     );
-    return array(
-      'variables' => $variables,
-      'imports'   => $imports
-    );
+    return array_merge_recursive( $config, array(
+      'variables' => $my_variables,
+      'imports'   => $my_imports
+    ) );
   }
   ```
   Configuration of the plugin is optional, but you should at least register your variables if you are using a CSS framework.

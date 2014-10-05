@@ -24,21 +24,6 @@ Write LESS, edit your variables and compile your stylesheet from your dashboard.
 
   - Configure the plugin with the `less_configuration` filter.
 
-    ```
-    add_filter( 'less_configuration', 'my_less_config' );
-    function my_less_config( $defaults ) {
-      $variables = array( 'less/variables.less' );
-      $imports = array(
-        'less/bootstrap.less',
-        'less/theme.less'
-      );
-      return array(
-        'variables' => $variables,
-        'imports'   => $imports
-      );
-    }
-    ```
-    
     Configuration of the plugin is optional, but you should at least register your variables if you are using a CSS framework.
 
   - Set a LESS variable value
