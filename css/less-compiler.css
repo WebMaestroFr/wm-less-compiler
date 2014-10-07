@@ -10,9 +10,3 @@
 .CodeMirror .CodeMirror-placeholder {
 	color: #777;
 }
-.toplevel_page_less_compiler .form-table th {
-	display: none;
-}
-.toplevel_page_less_compiler .form-table td {
-	padding-left: 0;
-}
