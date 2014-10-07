@@ -12,7 +12,7 @@ jQuery(document).ready(function ($) {
           $(this).toggle(varName.search(filter) >= 0);
         };
       e.preventDefault();
-      $('tr', '#less_compiler-tab-1').each(filterRow);
+      $('tr', '#less_compiler_less_variables').each(filterRow);
     };
   searchInput.keyup(searchVariable).on('search', searchVariable);
 });

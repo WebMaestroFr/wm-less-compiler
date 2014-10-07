@@ -155,11 +155,9 @@ class WM_Less
 			self::$page->add_notice( __( 'In order to edit your LESS variables from this page, you must <a href="http://webmaestro.fr/less-compiler-wordpress/" target="_blank">register your definition file(s)</a>.', 'wm-less' ) );
 		} else {
 			$section = array(
-				'less_variables' => array(
-					'title'       => __( 'Variables', 'wm-less' ),
-					'description' => '<input type="search" id="variable-search" placeholder="' . __( 'Search Variable', 'wm-less' ) . '">',
-					'fields'      => array()
-				)
+				'title'       => __( 'Variables', 'wm-less' ),
+				'description' => '<input type="search" id="variable-search" placeholder="' . __( 'Search Variable', 'wm-less' ) . '">',
+				'fields'      => array()
 			);
 			foreach ( self::$sources as $source ) {
 				$fields = array();
@@ -184,7 +182,9 @@ class WM_Less
 				}
 			}
 			if ( ! empty( $section['fields'] ) ) {
-				self::$page->apply_settings( $section );
+				self::$page->apply_settings( array(
+					'less_variables' => $section
+				) );
 			}
 		}
 	}
