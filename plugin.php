@@ -40,7 +40,8 @@ class WM_Less
 		$sources = array(),
 		$imports = array(),
 		$output = false,
-		$page = false;
+		$page = false,
+		$search;
 
 	public static function init()
 	{
@@ -101,7 +102,8 @@ class WM_Less
 		$defaults = array(
 			'variables' => array(),
 			'imports'   => array(),
-			'cache'    => ABSPATH . 'wp-content/cache'
+			'cache'     => ABSPATH . 'wp-content/cache',
+			'search'    => true
 		);
 		$config = apply_filters( 'less_configuration', $defaults );
 		self::$sources = self::valid_files( $config, 'variables' );
@@ -118,6 +120,7 @@ class WM_Less
 		} else if ( get_setting( 'less_compiler', 'stylesheet' ) || ! empty( self::$imports ) ) {
 			self::$output = self::$cache . '/wm-less-' . get_current_blog_id() . '.css';
 		}
+		self::$search = ! empty( $config['search'] );
 	}
 	private static function valid_files( $array, $key )
 	{
@@ -137,6 +140,7 @@ class WM_Less
 	}
 	private static function valid_file( $path )
 	{
+		if ( empty( $path ) ) { return false; }
 		if ( strpos( $path, site_url() ) === 0 ) {
 			$path = str_replace( trailingslashit( site_url() ), ABSPATH, $path );
 		} else if ( strpos( $path, ABSPATH ) !== 0 ) {
@@ -156,7 +160,7 @@ class WM_Less
 		} else {
 			$section = array(
 				'title'       => __( 'Variables', 'wm-less' ),
-				'description' => '<input type="search" id="variable-search" placeholder="' . __( 'Search Variable', 'wm-less' ) . '">',
+				'description' => self::$search ? '<input type="search" id="variable-search" placeholder="' . __( 'Search Variable', 'wm-less' ) . '">' : false,
 				'fields'      => array()
 			);
 			foreach ( self::$sources as $source ) {

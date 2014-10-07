@@ -6,7 +6,7 @@ jQuery(document).ready(function ($) {
   });
   var searchInput = $('#variable-search'),
     searchVariable = function (e) {
-      var filter = searchInput.val(),
+      var filter = searchInput.val().replace(/\s+/g, '-'),
         filterRow = function () {
           var varName = $('label', this).text();
           $(this).toggle(varName.search(filter) >= 0);

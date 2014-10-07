@@ -10,3 +10,6 @@
 .CodeMirror .CodeMirror-placeholder {
 	color: #777;
 }
+#variable-search {
+	margin-bottom: 1em;
+}
