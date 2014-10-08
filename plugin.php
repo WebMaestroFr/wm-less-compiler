@@ -84,7 +84,7 @@ class WM_Less
 				)
 			);
 			$sources = self::valid_files( $config, 'variables' );
-			if ( empty( self::$sources ) ) {
+			if ( empty( $sources ) ) {
 				$page->add_notice( __( 'In order to edit your LESS variables from this page, you must <a href="http://webmaestro.fr/less-compiler-wordpress/" target="_blank">register your definition file(s)</a>.', 'wm-less' ) );
 			} else {
 				$section = array(
