@@ -64,6 +64,7 @@ No answer to give.
 = 1.6 =
 * Added search box for variables
 * Use tabs
+* Parse sources only on admin side
 
 = 1.5 =
 * Uses filter for config
@@ -86,6 +87,7 @@ No answer to give.
 = 1.6 =
 * Added search box for variables
 * Use tabs
+* Parse sources only on admin side
 
 = 1.5 =
 * Uses filter for config

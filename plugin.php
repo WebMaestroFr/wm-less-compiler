@@ -60,7 +60,21 @@ class WM_Less
 					'title' => __( 'LESS', 'wm-less' ),
 					'icon_url' => plugin_dir_url( __FILE__ ) . 'img/menu-icon.png'
 				),
-				null,
+				array(
+					'less_compiler' => array(
+						'title'       => __( 'Stylesheet', 'wm-less' ),
+						'fields' => array(
+							'stylesheet' => array(
+								'label'       => false,
+								'type'        => 'textarea',
+								'description' => sprintf( __( 'From this very stylesheet, <strong>@import</strong> urls are relative to <code>%s</code>.', 'wm-less' ), get_template_directory() ),
+								'attributes'  => array(
+									'placeholder' => esc_attr( '/* LESS stylesheet */', 'wm-less' )
+								)
+							)
+						)
+					)
+				),
 				array(
 					'description' => '<a href="http://lesscss.org/" target="_blank">' . __( 'Getting started with LESS', 'wm-less' ) . '</a> | <a href="http://webmaestro.fr/less-compiler-wordpress/" target="_blank">' . __( 'Configure with PHP', 'wm-less' ) . '</a>',
 					'tabs'        => true,
@@ -69,50 +83,43 @@ class WM_Less
 					'updated'     => false
 				)
 			);
-			$section = array(
-				'title'       => __( 'Variables', 'wm-less' ),
-				'description' => empty( $config['search'] ) ? false : '<input type="search" id="variable-search" placeholder="' . __( 'Search Variable', 'wm-less' ) . '">',
-				'fields'      => array()
-			);
 			$sources = self::valid_files( $config, 'variables' );
-			foreach ( $sources as $source ) {
-				$fields = array();
-				if ( $lines = file( $source ) ) {
-					foreach ( $lines as $line ) {
-						if ( preg_match( '/^@([a-zA-Z-_]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
-							$name = sanitize_key( $matches[1] );
-							$default = trim( $matches[2] );
-							self::$variables[$name] = $default;
-							$fields[$name] = array(
-								'label' => '@' . $name,
-								'attributes' => array( 'placeholder' => esc_attr( $default ) )
-							);
+			if ( empty( self::$sources ) ) {
+				$page->add_notice( __( 'In order to edit your LESS variables from this page, you must <a href="http://webmaestro.fr/less-compiler-wordpress/" target="_blank">register your definition file(s)</a>.', 'wm-less' ) );
+			} else {
+				$section = array(
+					'title'       => __( 'Variables', 'wm-less' ),
+					'description' => empty( $config['search'] ) ? false : '<input type="search" id="variable-search" placeholder="' . __( 'Search Variable', 'wm-less' ) . '">',
+					'fields'      => array()
+				);
+				foreach ( $sources as $source ) {
+					$fields = array();
+					if ( $lines = file( $source ) ) {
+						foreach ( $lines as $line ) {
+							if ( preg_match( '/^@([a-zA-Z-_]+?)\s?:\s?(.+?);/', $line, $matches ) ) {
+								$name = sanitize_key( $matches[1] );
+								$default = trim( $matches[2] );
+								self::$variables[$name] = $default;
+								$fields[$name] = array(
+									'label' => '@' . $name,
+									'attributes' => array( 'placeholder' => esc_attr( $default ) )
+								);
+							}
 						}
 					}
+					if ( empty( $fields ) ) {
+						$page->add_notice( sprintf( __( 'No variables were found in the registered definition file <code>%s</code>.', 'wm-less' ), $source ), 'warning' );
+					} else {
+						$section['fields'] = array_merge( $section['fields'], $fields );
+					}
+				};
+				if ( ! empty( self::$variables ) ) {
+					$page->apply_settings( array(
+						'less_variables' => $section
+					) );
 				}
-				if ( empty( $fields ) ) {
-					$page->add_notice( sprintf( __( 'No variables were found in the registered definition file <code>%s</code>.', 'wm-less' ), $source ), 'warning' );
-				} else {
-					$section['fields'] = array_merge( $section['fields'], $fields );
-				}
-			};
+			}
 			update_option( 'less_variables_defaults', self::$variables );
-			$page->apply_settings( array(
-				'less_compiler' => array(
-					'title'       => __( 'Stylesheet', 'wm-less' ),
-					'fields' => array(
-						'stylesheet' => array(
-							'label'       => false,
-							'type'        => 'textarea',
-							'description' => sprintf( __( 'From this very stylesheet, <strong>@import</strong> urls are relative to <code>%s</code>.', 'wm-less' ), get_template_directory() ),
-							'attributes'  => array(
-								'placeholder' => esc_attr( '/* LESS stylesheet */', 'wm-less' )
-							)
-						)
-					)
-				),
-				'less_variables' => $section
-			) );
 			if ( ! is_dir( self::$cache ) && ! mkdir( self::$cache, 0755 ) ) {
 				$page->add_notice( sprintf( __( 'The cache directory <code>%s</code> does not exist and cannot be created. Please create it with <code>0755</code> permissions.', 'wm-less' ), self::$cache ), 'error' );
 			} else if ( ! is_writable( self::$cache ) && ! chmod( self::$cache, 0755 ) ) {

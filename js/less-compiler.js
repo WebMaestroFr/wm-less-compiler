@@ -2,7 +2,8 @@ jQuery(document).ready(function ($) {
   'use strict';
   CodeMirror.fromTextArea(document.getElementById('less_compiler_stylesheet'), {
     viewportMargin: Infinity,
-    tabSize: 2
+    tabSize: 2,
+    indentWithTabs: true
   });
   var searchInput = $('#variable-search'),
     searchVariable = function (e) {
