@@ -27,7 +27,9 @@ function less_import( $files ) {
 }
 
 function less_output() {
-  add_settings_error( 'less_compiler', 'depreciated_function', __( 'The function <code>less_output( $stylesheet );</code> is depreciated. Stylesheets will from now be generated within the cache directory.', 'wm-less' ) );
+  add_action( 'admin_notices', function () {
+    add_settings_error( 'less_compiler', 'depreciated_function', __( 'The function <code>less_output( $stylesheet );</code> is depreciated. Stylesheets will from now be generated within the cache directory.', 'wm-less' ) );
+  } );
 }
 
 if ( $stylesheet = get_setting( 'less', 'compiler' ) ) {

@@ -1,8 +1,8 @@
 jQuery(document).ready(function ($) {
   'use strict';
   CodeMirror.fromTextArea(document.getElementById('less_compiler_stylesheet'), {
-      viewportMargin: Infinity,
-      tabSize: 2
+    viewportMargin: Infinity,
+    tabSize: 2
   });
   var searchInput = $('#variable-search'),
     searchVariable = function (e) {
