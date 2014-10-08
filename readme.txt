@@ -4,7 +4,7 @@ Donate link: http://webmaestro.fr/less-compiler-wordpress/
 Tags: LESS, compiler
 Requires at least: 3.9
 Tested up to: 4.0
-Stable tag: 1.5
+Stable tag: 1.6
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,11 +27,13 @@ Write LESS, edit your variables and compile your stylesheet from your dashboard.
     Configuration of the plugin is optional, but you should at least register your variables if you are using a CSS framework.
 
   - Set a LESS variable value
+
     ```
     less_set( $variable, $value );
     ```
 
   - Get a LESS variable value
+
     ```
     less_get( $variable );
     ```
@@ -55,9 +57,13 @@ No answer to give.
 == Screenshots ==
 
 1. The 'Compiler' page
-2. The 'Variables' page
+2. The 'Variables' page after configuration
 
 == Changelog ==
+
+= 1.6 =
+* Added search box for variables
+* Use tabs
 
 = 1.5 =
 * Uses filter for config
@@ -76,6 +82,10 @@ No answer to give.
 * Minor fixes (typo, dependences)
 
 == Upgrade Notice ==
+
+= 1.6 =
+* Added search box for variables
+* Use tabs
 
 = 1.5 =
 * Uses filter for config
