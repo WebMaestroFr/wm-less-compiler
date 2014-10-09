@@ -180,8 +180,7 @@ class WM_Less
 		$parser->SetImportDirs( array(
 			get_stylesheet_directory() => '',
 			get_template_directory()   => '',
-			ABSPATH                    => '',
-			''                         => ''
+			ABSPATH                    => ''
 		) );
 		try {
 			foreach ( self::$imports as $file ) {
