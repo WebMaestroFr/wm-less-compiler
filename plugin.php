@@ -119,12 +119,12 @@ class WM_Less
 					) );
 				}
 			}
-			update_option( 'less_variables_defaults', self::$variables );
 			if ( ! is_dir( self::$cache ) && ! mkdir( self::$cache, 0755 ) ) {
 				$page->add_notice( sprintf( __( 'The cache directory <code>%s</code> does not exist and cannot be created. Please create it with <code>0755</code> permissions.', 'wm-less' ), self::$cache ), 'error' );
 			} else if ( ! is_writable( self::$cache ) && ! chmod( self::$cache, 0755 ) ) {
 				$page->add_notice( sprintf( __( 'The cache directory <code>%s</code> is not writable. Please apply <code>0755</code> permissions to it.', 'wm-less' ), self::$cache ), 'error' );
 			}
+			update_option( 'less_variables_defaults', self::$variables );
 		} else {
 			self::$variables = get_option( 'less_variables_defaults', array() );
 		}
@@ -132,8 +132,8 @@ class WM_Less
 		if ( is_writable( self::$cache ) ) {
 			self::$output = self::$cache . '/wm-less-' . get_current_blog_id() . '.css';
 			add_action( 'less_compiler_settings_updated', array( __CLASS__, 'compile' ) );
-			add_filter( 'style_loader_src', array( __CLASS__, 'style_loader_src' ) );
 			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
+			add_filter( 'style_loader_src', array( __CLASS__, 'style_loader_src' ) );
 		}
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'admin_enqueue_scripts' ) );
 	}
@@ -211,9 +211,7 @@ class WM_Less
 	public static function enqueue_scripts()
 	{
 		if ( ! empty( self::$imports ) || get_setting( 'less_compiler', 'stylesheet' ) ) {
-			if ( ! is_file( self::$output ) ) {
-				self::compile();
-			}
+			if ( ! is_file( self::$output ) ) { self::compile(); }
 			wp_enqueue_style( 'wm-less', str_replace( ABSPATH, trailingslashit( site_url() ), self::$output ) );
 		}
 	}
