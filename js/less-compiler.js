@@ -3,7 +3,8 @@ jQuery(document).ready(function ($) {
   CodeMirror.fromTextArea(document.getElementById('less_compiler_stylesheet'), {
     viewportMargin: Infinity,
     tabSize: 2,
-    indentWithTabs: true
+    indentWithTabs: true,
+    mode: 'text/x-less'
   });
   var searchInput = $('#variable-search'),
     searchVariable = function (e) {
