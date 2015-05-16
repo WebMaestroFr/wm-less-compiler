@@ -128,7 +128,7 @@ class WM_Less
 		} else {
 			self::$variables = get_option( 'less_variables_defaults', array() );
 		}
-		self::$variables = array_merge( self::$variables, array_filter( get_setting( 'less_variables' ) ) );
+		self::$variables = array_merge( self::$variables, array_filter( (array) get_setting( 'less_variables' ) ) );
 		if ( is_writable( self::$cache ) ) {
 			self::$output = self::$cache . '/wm-less-' . get_current_blog_id() . '.css';
 			add_action( 'less_compiler_settings_updated', array( __CLASS__, 'compile' ) );
